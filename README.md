@@ -12,7 +12,7 @@ Version: 1.0.0
 
 ## 👥 Thành viên nhóm
 
-| STT | Họ Tên | MSSV | Vai trò |
+| STT | Họ & Tên | MSSV | Vai trò |
 |-----|--------|------|---------|
 | 1 | Hoàng Hữu Điền | 172100041 | Developer |
 | 2 | Báo Ngọc Thiên Bảo | 1721031139 | Team Leader |
