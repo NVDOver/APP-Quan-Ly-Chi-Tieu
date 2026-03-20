@@ -14,8 +14,8 @@ Version: 1.0.0
 
 | STT | Họ Tên | MSSV | Vai trò |
 |-----|--------|------|---------|
-| 1 | Hoàng Hữu Diện | 172100041 | Team Lead |
-| 2 | [Tên thành viên 2] | [MSSV] | Developer |
+| 1 | Hoàng Hữu Điền | 172100041 | Team Lead |
+| 2 | Báo Ngọc Thiên Bảo | 1721031139 | Developer |
 | 3 | [Tên thành viên 3] | [MSSV] | Developer |
 | 4 | [Tên thành viên 4] | [MSSV] | Developer |
 | 5 | [Tên thành viên 5] | [MSSV] | Developer |
