@@ -97,7 +97,20 @@ python src/main.py
 5. Tạo Pull Request trên GitHub
 6. Merge sau khi được review
 ```
+Description:
+Currently transactions only store basic information like amount and category.
+This makes it difficult to understand the context of each expense.
 
+Proposed Solution:
+- Add a "note" field for each transaction
+- Add "tags" (multiple tags per transaction)
+- Allow filtering transactions by tag
+- Add statistics by tag
+
+Benefits:
+- Improve user experience
+- Better tracking and analysis of spending
+- Create foundation for future AI features
 ### Quy tắc Commit
 
 - `feat:` - Tính năng mới
