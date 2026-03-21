@@ -113,17 +113,17 @@ Benefits:
 - Create foundation for future AI features
 ### Quy tắc Commit
 
-- `feat:` - Tính năng mới
-- `fix:` - Sửa lỗi
-- `docs:` - Cập nhật tài liệu
-- `style:` - Định dạng code
-- `refactor:` - Tái cấu trúc
+- `feat:` - Triển khai một tính năng hoàn toàn mới.
+- `fix:` - Khắc phục các lỗi kỹ thuật hoặc lỗi logic.
+- `docs:` - Chỉ thay đổi hoặc cập nhật tài liệu hướng dẫn.
+- `style:` - Thay đổi liên quan đến định dạng code (khoảng trắng, dấu phẩy...) mà không làm thay đổi logic.
+- `refactor:` - Tái cấu trúc mã nguồn để tối ưu hiệu suất hoặc độ sạch, không sửa lỗi hay thêm tính năng.
 
 ## 📝 Ghi chú phát triển
 
-- Branch `main` được bảo vệ - cần Pull Request Review
-- Tất cả code phải được test trước khi merge
-- Cập nhật README khi có thay đổi lớn
+- Bảo vệ nhánh Main: Nhánh main được thiết lập chế độ bảo vệ nghiêm ngặt. Mọi thay đổi bắt buộc phải thông qua quy trình Pull Request (PR) và được kiểm duyệt (Review) bởi thành viên có thẩm quyền.
+- Đảm bảo chất lượng: Tất cả các đoạn mã mới hoặc chỉnh sửa đều phải vượt qua các bài kiểm tra (Unit Test/Integration Test) trước khi thực hiện thao tác Merge.
+- Cập nhật tài liệu: Ngay khi có những thay đổi lớn về logic hoặc cấu trúc dữ liệu, yêu cầu cập nhật tệp README.md để đảm bảo tính đồng bộ cho toàn đội ngũ.
 
 ## 📞 Liên hệ
 
