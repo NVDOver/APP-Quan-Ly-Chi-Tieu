@@ -13,6 +13,7 @@ def main():
     print("=" * 50)
     print("\n👤 Thành viên nhóm:")
     print("  - Hoàng Hữu Diện (172100041) - Team Lead")
+    print("  - Báo Ngọc Thiên Bảo (1721031139) - Team Member")
     print("\n📖 Hướng dẫn sử dụng:")
     print("  1. Ghi chi tiêu")
     print("  2. Xem báo cáo")
