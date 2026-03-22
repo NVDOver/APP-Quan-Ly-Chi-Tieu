@@ -14,11 +14,11 @@ Version: 1.0.0
 
 | STT | Họ & Tên | MSSV | Vai trò |
 |-----|--------|------|---------|
-| 1 | Hoàng Hữu Điền | 172100041 | Developer |
-| 2 | Báo Ngọc Thiên Bảo | 1721031139 | Team Leader |
-| 3 | Nguyễn Đình Hào | 1721031314 | Developer |
-| 4 | Ninh Văn Dũng | 1721031229 | Developer |
-| 5 | Trần Quốc Lâm | 1721030882 | Developer |
+| 01 | Hoàng Hữu Điền | 172100041 | Developer |
+| 02 | Báo Ngọc Thiên Bảo | 1721031139 | Team Leader |
+| 03 | Nguyễn Đình Hào | 1721031314 | Developer |
+| 04 | Ninh Văn Dũng | 1721031229 | Developer |
+| 05 | Trần Quốc Lâm | 1721030882 | Developer |
 
 ## 📦 Công nghệ sử dụng
 
