@@ -4,6 +4,7 @@ import { getBudgetsWithProgress } from "@/app/actions/budget-actions";
 import { BudgetForm } from "@/components/budgets/budget-form";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { DeleteBudgetButton } from "@/components/budgets/delete-budget-button";
 import { TrendingUp, CheckCircle2, AlertTriangle, XCircle, Info, LayoutList } from "lucide-react";
 import { redirect } from "next/navigation";
 import { format } from "date-fns";
@@ -72,14 +73,17 @@ export default async function BudgetsPage() {
                         Hạn mức: <span className="text-foreground">{formatCurrency(budget.limitAmount)}</span>
                       </CardDescription>
                     </div>
-                    <div className={`p-2 rounded-xl ${isOverBudget ? 'bg-rose-100 text-rose-600' : isCritical ? 'bg-rose-100 text-rose-600' : isWarning ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>
-                      {isOverBudget ? (
-                        <XCircle className="h-5 w-5" />
-                      ) : isWarning || isCritical ? (
-                        <AlertTriangle className="h-5 w-5" />
-                      ) : (
-                        <CheckCircle2 className="h-5 w-5" />
-                      )}
+                    <div className="flex items-center gap-2">
+                      <div className={`p-2 rounded-xl ${isOverBudget ? 'bg-rose-100 text-rose-600' : isCritical ? 'bg-rose-100 text-rose-600' : isWarning ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                        {isOverBudget ? (
+                          <XCircle className="h-5 w-5" />
+                        ) : isWarning || isCritical ? (
+                          <AlertTriangle className="h-5 w-5" />
+                        ) : (
+                          <CheckCircle2 className="h-5 w-5" />
+                        )}
+                      </div>
+                      <DeleteBudgetButton budgetId={budget.id} />
                     </div>
                   </div>
                 </CardHeader>

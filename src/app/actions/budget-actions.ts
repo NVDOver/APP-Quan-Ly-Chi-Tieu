@@ -49,6 +49,26 @@ export async function upsertBudget(
   }
 }
 
+export async function deleteBudget(budgetId: string): Promise<ActionResult> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+
+    const budget = await prisma.budget.findUnique({ where: { id: budgetId } });
+    if (!budget || budget.userId !== session.user.id) {
+       return { success: false, error: "Không tìm thấy ngân sách" };
+    }
+
+    await prisma.budget.delete({ where: { id: budgetId } });
+
+    revalidatePath("/budgets");
+    revalidatePath("/");
+    return actionSuccess();
+  } catch (error) {
+    return actionError(error);
+  }
+}
+
 export async function getBudgetsWithProgress() {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
