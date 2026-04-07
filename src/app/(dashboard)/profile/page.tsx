@@ -8,14 +8,12 @@ import { User, ShieldCheck, Globe, CreditCard } from "lucide-react";
 
 export default async function ProfilePage() {
   const session = await auth();
-  if (!session?.user?.id) redirect("/login");
-  const userId = session.user.id;
+  const userId = session!.user!.id;
 
   const dbUser = await prisma.user.findUnique({
     where: { id: userId },
   });
 
-  if (!dbUser) redirect("/login");
 
   return (
     <div className="flex flex-col space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -42,7 +40,7 @@ export default async function ProfilePage() {
               </div>
             </CardHeader>
             <CardContent className="pt-4">
-              <ProfileForm user={dbUser} />
+              <ProfileForm user={dbUser!} />
             </CardContent>
           </Card>
 
@@ -60,11 +58,11 @@ export default async function ProfilePage() {
                <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-muted/50">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center font-bold text-emerald-600">
-                      {dbUser.currency}
+                      {dbUser!.currency}
                     </div>
                     <div>
                       <p className="text-sm font-bold uppercase tracking-tight">Đơn vị đang dùng</p>
-                      <p className="text-xs text-muted-foreground">Tất cả số liệu sẽ được tính theo {dbUser.currency}</p>
+                      <p className="text-xs text-muted-foreground">Tất cả số liệu sẽ được tính theo {dbUser!.currency}</p>
                     </div>
                   </div>
                   <div className="text-right">

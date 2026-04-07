@@ -23,8 +23,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { createCategory, updateCategory, deleteCategory } from "@/app/actions/category-actions";
-import { getCategories } from "@/app/actions/get-categories";
+import { createCategory, updateCategory, deleteCategory, getCategories } from "@/app/actions/category-actions";
 import {
   Table,
   TableBody,

@@ -94,22 +94,17 @@ export async function deleteTransaction(transactionId: string) {
     const userId = session.user.id;
 
     await prisma.$transaction(async (tx) => {
-      // Tìm giao dịch cũ
       const transaction = await tx.transaction.findUnique({
         where: { id: transactionId, userId },
       });
-
       if (!transaction) throw new Error("Giao dịch không tồn tại");
 
       // Hoàn trả số dư ví
       if (transaction.type === "TRANSFER") {
-        // Cộng lại tiền cho ví nguồn
         await tx.wallet.update({
           where: { id: transaction.walletId, userId },
           data: { balance: { increment: transaction.amount } },
         });
-
-        // Trừ lại tiền ở ví đích
         if (transaction.toWalletId) {
           await tx.wallet.update({
             where: { id: transaction.toWalletId, userId },
@@ -117,28 +112,37 @@ export async function deleteTransaction(transactionId: string) {
           });
         }
       } else {
-        // Đảo ngược logic balance
         await tx.wallet.update({
           where: { id: transaction.walletId, userId },
           data: {
-            balance: transaction.type === "INCOME"
-              ? { decrement: transaction.amount }
-              : { increment: transaction.amount },
+            balance:
+              transaction.type === "INCOME"
+                ? { decrement: transaction.amount }
+                : { increment: transaction.amount },
           },
         });
       }
 
-      // Xóa giao dịch
-      await tx.transaction.delete({
-        where: { id: transactionId },
-      });
+      // FIX: Nếu transaction này liên quan đến saving goal → hoàn trả
+      if (transaction.savingGoalId) {
+        await tx.savingGoal.update({
+          where: { id: transaction.savingGoalId },
+          data: { currentAmount: { decrement: transaction.amount } },
+        });
+      }
+
+      await tx.transaction.delete({ where: { id: transactionId } });
     });
 
     revalidatePath("/");
     revalidatePath("/transactions");
+    revalidatePath("/saving-goals"); // Thêm revalidate saving-goals
     return { success: true };
   } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : "Đã xảy ra lỗi" };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Đã xảy ra lỗi",
+    };
   }
 }
 
@@ -155,14 +159,14 @@ export async function getTransactions(params: {
   const { page = 1, pageSize = 10, type, walletId } = params;
   const skip = (page - 1) * pageSize;
 
-  const where: Prisma.TransactionWhereInput = { 
-    userId 
+  const where: Prisma.TransactionWhereInput = {
+    userId
   };
-  
+
   if (type && type !== "ALL") {
     where.type = type as TransactionType;
   }
-  
+
   if (walletId && walletId !== "ALL") {
     where.OR = [
       { walletId: walletId },

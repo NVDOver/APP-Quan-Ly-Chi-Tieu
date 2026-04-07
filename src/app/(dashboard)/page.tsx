@@ -11,15 +11,11 @@ import { IncomeVsExpenseChart } from "@/components/dashboard/income-expense-char
 import { BudgetAlerts } from "@/components/dashboard/budget-alerts";
 import { FadeIn } from "@/components/fade-in";
 import { AIAdvisor } from "@/components/dashboard/ai-advisor";
+import { formatCurrency, formatCurrencyCompact } from "@/lib/utils";
 
 export default async function DashboardPage() {
   const session = await auth();
-
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
-  const userId = session.user.id;
+  const userId = session!.user!.id;
 
   // Thực hiện truy vấn song song (Parallel Data Fetching)
   const [wallets, categories, savingGoals, stats, dbUser] = await Promise.all([
@@ -30,21 +26,9 @@ export default async function DashboardPage() {
     prisma.user.findUnique({ where: { id: userId } }),
   ]);
 
-  if (!dbUser) {
-    redirect("/login");
-  }
 
   // Tính tổng số dư của tất cả các ví
   const totalBalance = wallets.reduce((acc, wallet) => acc + Number(wallet.balance), 0);
-
-  // Định dạng tiền tệ theo tùy chọn của người dùng
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', { 
-      style: 'currency', 
-      currency: dbUser.currency || 'VND',
-      minimumFractionDigits: dbUser.currency === 'VND' ? 0 : 2
-    }).format(amount);
-  };
 
   const walletCount = wallets.length;
   const categoryCount = categories.length;
@@ -132,7 +116,7 @@ export default async function DashboardPage() {
                 </Card>
               </FadeIn>
             </div>
-            
+
             <div className="lg:col-span-2">
               <FadeIn delay={0.5} direction="up">
                 <Card className="shadow-sm border-none overflow-hidden bg-card h-full">
@@ -166,8 +150,8 @@ export default async function DashboardPage() {
                               <span className="text-primary font-bold">{goal.percent}%</span>
                             </div>
                             <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                              <div 
-                                className="h-full bg-primary transition-all duration-500" 
+                              <div
+                                className="h-full bg-primary transition-all duration-500"
                                 style={{ width: `${goal.percent}%` }}
                               />
                             </div>
@@ -243,8 +227,8 @@ export default async function DashboardPage() {
                       categories.slice(0, 5).map((category) => (
                         <div key={category.id} className="flex items-center">
                           <div className={`flex h-10 w-10 items-center justify-center rounded-full mr-4 ${category.type === 'INCOME'
-                              ? 'bg-green-100 dark:bg-green-900/20'
-                              : 'bg-rose-100 dark:bg-rose-900/20'
+                            ? 'bg-green-100 dark:bg-green-900/20'
+                            : 'bg-rose-100 dark:bg-rose-900/20'
                             }`}
                           >
                             {category.type === 'INCOME' ? (

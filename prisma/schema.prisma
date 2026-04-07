@@ -75,29 +75,49 @@ model Category {
 }
 
 model Transaction {
-  id         String          @id @default(cuid())
-  userId     String          @map("user_id")
-  walletId   String          @map("wallet_id")
-  toWalletId String?         @map("to_wallet_id")
-  categoryId String?         @map("category_id")
-  amount     Decimal         @db.Decimal(19, 4)
-  date       DateTime        @db.Timestamptz
-  note       String?
-  receiptUrl String?         @map("receipt_url")
-  type       TransactionType
-  createdAt  DateTime        @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt  DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+  id           String          @id @default(cuid())
+  userId       String          @map("user_id")
+  walletId     String          @map("wallet_id")
+  toWalletId   String?         @map("to_wallet_id")
+  categoryId   String?         @map("category_id")
+  savingGoalId String?         @map("saving_goal_id") // <- THÊM TRƯỜNG NÀY
+  amount       Decimal         @db.Decimal(19, 4)
+  date         DateTime        @db.Timestamptz
+  note         String?
+  receiptUrl   String?         @map("receipt_url")
+  type         TransactionType
+  createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime        @updatedAt @map("updated_at") @db.Timestamptz
 
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  wallet     Wallet    @relation("FromWallet", fields: [walletId], references: [id], onDelete: Cascade)
-  toWallet   Wallet?   @relation("ToWallet", fields: [toWalletId], references: [id], onDelete: SetNull)
-  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet      Wallet      @relation("FromWallet", fields: [walletId], references: [id], onDelete: Cascade)
+  toWallet    Wallet?     @relation("ToWallet", fields: [toWalletId], references: [id], onDelete: SetNull)
+  category    Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  savingGoal  SavingGoal? @relation(fields: [savingGoalId], references: [id], onDelete: SetNull) // <- THÊM RELATION
 
   @@index([userId])
   @@index([walletId])
   @@index([categoryId])
+  @@index([savingGoalId]) // <- THÊM INDEX
   @@index([date])
   @@map("transactions")
+}
+
+model SavingGoal {
+  id            String   @id @default(cuid())
+  userId        String   @map("user_id")
+  name          String
+  targetAmount  Decimal  @map("target_amount") @db.Decimal(19, 4)
+  currentAmount Decimal  @default(0) @map("current_amount") @db.Decimal(19, 4)
+  deadlineDate  DateTime @map("deadline_date") @db.Date
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[] // <- THÊM RELATION NGƯỢC
+
+  @@index([userId])
+  @@map("saving_goals")
 }
 
 model Budget {
@@ -119,18 +139,4 @@ model Budget {
   @@map("budgets")
 }
 
-model SavingGoal {
-  id            String   @id @default(cuid())
-  userId        String   @map("user_id")
-  name          String
-  targetAmount  Decimal  @map("target_amount") @db.Decimal(19, 4)
-  currentAmount Decimal  @default(0) @map("current_amount") @db.Decimal(19, 4)
-  deadlineDate  DateTime @map("deadline_date") @db.Date
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@map("saving_goals")
-}

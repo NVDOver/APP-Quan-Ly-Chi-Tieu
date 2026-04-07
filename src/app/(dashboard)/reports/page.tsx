@@ -41,7 +41,7 @@ export default function ReportsPage() {
     if (result.success) {
       setTrendData(result.data || []);
     } else {
-      toast.error(result.error);
+      toast.error(result.error || "Đã xảy ra lỗi");
     }
     setIsLoading(false);
   };
@@ -58,12 +58,13 @@ export default function ReportsPage() {
         // Create download link for Base64 Excel
         const link = document.createElement("a");
         link.href = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${result.data}`;
-        link.download = `Bao_cao_giao_dich_${new Date().toLocaleDateString("vi-VN").replace(/\//g, "-")}.xlsx`;
+        const dateStr = new Date().toLocaleDateString("vi-VN").replace(/\//g, "-");
+        link.download = `Bao_cao_giao_dich_${dateStr}.xlsx`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         toast.success("Xuất file Excel thành công!");
-      } else {
+      } else if (!result.success) {
         toast.error(result.error || "Lỗi khi xuất file");
       }
     } catch (error) {

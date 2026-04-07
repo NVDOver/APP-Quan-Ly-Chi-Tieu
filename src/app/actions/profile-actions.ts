@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { ActionResult, actionSuccess, actionError } from "@/lib/action-types";
 
 const profileSchema = z.object({
   fullName: z.string().min(2, "Họ tên phải có ít nhất 2 ký tự"),
@@ -18,67 +19,66 @@ const passwordSchema = z.object({
   newPassword: z.string().min(6, "Mật khẩu mới phải có ít nhất 6 ký tự"),
 });
 
-export async function updateProfile(data: z.infer<typeof profileSchema>) {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Unauthorized");
-  const userId = session.user.id;
+export async function updateProfile(data: z.infer<typeof profileSchema>): Promise<ActionResult> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+    const userId = session.user.id;
 
-  const validated = profileSchema.parse(data);
+    const validated = profileSchema.parse(data);
 
-  await prisma.user.update({
-    where: { id: userId },
-    data: {
-      fullName: validated.fullName,
-      email: validated.email,
-      avatarUrl: validated.avatarUrl || null,
-      currency: validated.currency,
-    },
-  });
+    // Nếu đổi email, kiểm tra xem email mới có bị dùng bởi user khác không
+    if (validated.email !== session.user.email) {
+      const existingUser = await prisma.user.findUnique({
+        where: { email: validated.email },
+      });
+      if (existingUser && existingUser.id !== userId) {
+        return { success: false, error: "Email này đã được sử dụng bởi tài khoản khác!" };
+      }
+    }
 
-  revalidatePath("/profile");
-  revalidatePath("/");
-  return { success: true };
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        fullName: validated.fullName,
+        email: validated.email,
+        avatarUrl: validated.avatarUrl || null,
+        currency: validated.currency,
+      },
+    });
+
+    revalidatePath("/profile");
+    revalidatePath("/");
+    return actionSuccess();
+  } catch (error) {
+    return actionError(error);
+  }
 }
 
-export async function updatePassword(data: z.infer<typeof passwordSchema>) {
-  const session = await auth();
-  if (!session?.user?.email) throw new Error("Unauthorized");
-  const email = session.user.email;
+export async function updatePassword(data: z.infer<typeof passwordSchema>): Promise<ActionResult> {
+  try {
+    const session = await auth();
+    if (!session?.user?.email) return { success: false, error: "Unauthorized" };
+    const email = session.user.email;
 
-  const validated = passwordSchema.parse(data);
+    const validated = passwordSchema.parse(data);
 
-  const user = await prisma.user.findUnique({
-    where: { email },
-  });
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) throw new Error("User not found");
 
-  if (!user) throw new Error("User not found");
+    const isValid = await bcrypt.compare(validated.currentPassword, user.passwordHash);
+    if (!isValid) {
+      return { success: false, error: "Mật khẩu hiện tại không đúng." };
+    }
 
-  const isValid = await bcrypt.compare(validated.currentPassword, user.passwordHash);
-  if (!isValid) throw new Error("Mật khẩu hiện tại không đúng");
+    const hashedPassword = await bcrypt.hash(validated.newPassword, 10);
+    await prisma.user.update({
+      where: { email },
+      data: { passwordHash: hashedPassword },
+    });
 
-  const hashedPassword = await bcrypt.hash(validated.newPassword, 10);
-
-  await prisma.user.update({
-    where: { email },
-    data: { passwordHash: hashedPassword },
-  });
-
-  return { success: true };
-}
-
-export async function getCurrencyRates() {
-  // Hardcoded rates for demo purposes (Base is VND)
-  // In a real app, this would fetch from an external API (like fixer.io or Frankfurter)
-  return {
-    VND: 1,
-    USD: 25450,
-    EUR: 27120,
-    JPY: 168,
-    GBP: 32300,
-    AUD: 16850,
-    CAD: 18500,
-    SGD: 19100,
-    CNY: 3520,
-    KRW: 18.5,
-  };
+    return actionSuccess();
+  } catch (error) {
+    return actionError(error);
+  }
 }

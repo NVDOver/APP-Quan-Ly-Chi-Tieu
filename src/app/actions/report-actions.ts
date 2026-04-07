@@ -3,14 +3,21 @@
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import * as XLSX from "xlsx";
+import { ActionResult, actionSuccess, actionError } from "@/lib/action-types";
 
-export async function exportTransactionsToExcel() {
+export type TrendData = {
+  key: string;
+  label: string;
+  income: number;
+  expense: number;
+};
+
+export async function exportTransactionsToExcel(): Promise<ActionResult<string>> {
   try {
     const session = await auth();
-    if (!session?.user?.id) throw new Error("Unauthorized");
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
     const userId = session.user.id;
 
-    // 1. Fetch transactions with relations
     const transactions = await prisma.transaction.findMany({
       where: { userId },
       include: {
@@ -21,7 +28,6 @@ export async function exportTransactionsToExcel() {
       orderBy: { date: "desc" },
     });
 
-    // 2. Format data for Excel
     const data = transactions.map((t) => ({
       "Ngày": new Date(t.date).toLocaleDateString("vi-VN"),
       "Loại": t.type === "INCOME" ? "Thu nhập" : t.type === "EXPENSE" ? "Chi tiêu" : "Chuyển tiền",
@@ -32,58 +38,37 @@ export async function exportTransactionsToExcel() {
       "Ghi chú": t.note || "",
     }));
 
-    // 3. Create Workbook
     const worksheet = XLSX.utils.json_to_sheet(data);
-    
-    // Set column widths
     const wscols = [
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 20 },
-      { wch: 20 },
-      { wch: 20 },
-      { wch: 15 },
-      { wch: 30 },
+      { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 15 }, { wch: 30 },
     ];
     worksheet["!cols"] = wscols;
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Giao dịch");
 
-    // 4. Generate Base64 string
     const buffer = XLSX.write(workbook, { type: "base64", bookType: "xlsx" });
 
-    return { success: true, data: buffer };
+    return actionSuccess(buffer);
   } catch (error) {
-    if (error instanceof Error) console.error("Export Error:", error.message);
-    return { success: false, error: "Không thể xuất file Excel" };
+    return actionError(error);
   }
 }
 
-export async function getCashFlowTrend() {
+export async function getCashFlowTrend(): Promise<ActionResult<TrendData[]>> {
   try {
     const session = await auth();
-    if (!session?.user?.id) throw new Error("Unauthorized");
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
     const userId = session.user.id;
 
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
-    sixMonthsAgo.setDate(1);
-    sixMonthsAgo.setHours(0, 0, 0, 0);
-
-    const transactions = await prisma.transaction.findMany({
-      where: {
-        userId,
-        date: { gte: sixMonthsAgo },
-      },
-      orderBy: { date: "asc" },
-    });
-
-    // Group by month and calculate Income vs Expense
     const months = Array.from({ length: 6 }).map((_, i) => {
       const d = new Date();
+      d.setDate(1);
       d.setMonth(d.getMonth() - (5 - i));
+      d.setHours(0, 0, 0, 0);
       return {
+        start: new Date(d),
+        end: new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999),
         key: `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, "0")}`,
         label: `Tháng ${d.getMonth() + 1}/${d.getFullYear()}`,
         income: 0,
@@ -91,18 +76,41 @@ export async function getCashFlowTrend() {
       };
     });
 
-    transactions.forEach((t) => {
-      const monthKey = `${new Date(t.date).getFullYear()}-${(new Date(t.date).getMonth() + 1).toString().padStart(2, "0")}`;
-      const month = months.find((m) => m.key === monthKey);
+    const sixMonthsAgo = months[0].start;
+
+    const result = await prisma.$queryRaw<
+      Array<{ month_key: string; type: string; total: number }>
+    >`
+      SELECT
+        TO_CHAR(date, 'YYYY-MM') AS month_key,
+        type,
+        SUM(amount)::float AS total
+      FROM transactions
+      WHERE
+        user_id = ${userId}
+        AND date >= ${sixMonthsAgo}
+        AND type IN ('INCOME', 'EXPENSE')
+      GROUP BY month_key, type
+      ORDER BY month_key ASC
+    `;
+
+    result.forEach((row) => {
+      const month = months.find((m) => m.key === row.month_key);
       if (month) {
-        if (t.type === "INCOME") month.income += Number(t.amount);
-        if (t.type === "EXPENSE") month.expense += Number(t.amount);
+        if (row.type === "INCOME") month.income = Number(row.total);
+        if (row.type === "EXPENSE") month.expense = Number(row.total);
       }
     });
 
-    return { success: true, data: months };
+    return actionSuccess(
+      months.map(({ key, label, income, expense }) => ({
+        key,
+        label,
+        income,
+        expense,
+      }))
+    );
   } catch (error) {
-    if (error instanceof Error) console.error("Trend Error:", error.message);
-    return { success: false, error: "Lỗi tải biểu đồ xu hướng" };
+    return actionError(error);
   }
 }

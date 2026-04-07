@@ -2,6 +2,7 @@
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatCurrency, formatCurrencyCompact } from "@/lib/utils";
 
 interface SpendingPieChartProps {
   data: {
@@ -12,12 +13,6 @@ interface SpendingPieChartProps {
 }
 
 export function SpendingPieChart({ data }: SpendingPieChartProps) {
-  const formatValue = (val: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(val);
-  };
 
   return (
     <Card className="flex flex-col h-full border-none shadow-none">
@@ -45,9 +40,8 @@ export function SpendingPieChart({ data }: SpendingPieChartProps) {
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip 
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                formatter={(value: any) => [formatValue(Number(value || 0)), "Chi tiêu"]}
+              <Tooltip
+                formatter={(value: string | number | undefined | readonly (string | number)[]) => [formatCurrency(Number(value || 0)), "Chi tiêu"]}
                 contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
               />
               <Legend verticalAlign="bottom" height={36} iconType="circle" />

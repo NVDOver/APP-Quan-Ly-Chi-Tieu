@@ -8,11 +8,11 @@ import { TrendingUp, CheckCircle2, AlertTriangle, XCircle, Info, LayoutList } fr
 import { redirect } from "next/navigation";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
+import { formatCurrency, formatCurrencyCompact } from "@/lib/utils";
 
 export default async function BudgetsPage() {
   const session = await auth();
-  if (!session?.user?.id) redirect("/login");
-  const userId = session.user.id;
+  const userId = session!.user!.id;
 
   const [budgets, categories] = await Promise.all([
     getBudgetsWithProgress(),
@@ -20,10 +20,6 @@ export default async function BudgetsPage() {
       where: { userId, type: 'EXPENSE', isDeleted: false },
     })
   ]);
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-  };
 
   const currentMonth = format(new Date(), 'MMMM yyyy', { locale: vi });
 
@@ -56,12 +52,12 @@ export default async function BudgetsPage() {
             const isOverBudget = actualPercent > 100;
             const isCritical = actualPercent >= 90;
             const isWarning = actualPercent >= 70 && actualPercent < 90;
-            
+
             // Dynamic color selection
-            const progressColorClass = isOverBudget || isCritical 
-              ? "[&>div]:bg-rose-500" 
-              : isWarning 
-                ? "[&>div]:bg-amber-500" 
+            const progressColorClass = isOverBudget || isCritical
+              ? "[&>div]:bg-rose-500"
+              : isWarning
+                ? "[&>div]:bg-amber-500"
                 : "[&>div]:bg-emerald-500";
 
             return (
@@ -104,7 +100,7 @@ export default async function BudgetsPage() {
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2.5">
                     <div className="flex justify-between items-center">
                       <span className="text-xs font-bold text-muted-foreground uppercase tracking-tight">Sử dụng</span>
@@ -112,8 +108,8 @@ export default async function BudgetsPage() {
                         {actualPercent}%
                       </span>
                     </div>
-                    <Progress 
-                      value={budget.progress} 
+                    <Progress
+                      value={budget.progress}
                       className={`h-3 rounded-full bg-muted shadow-inner ${progressColorClass}`}
                     />
                   </div>

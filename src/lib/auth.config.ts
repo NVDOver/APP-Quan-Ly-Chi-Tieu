@@ -1,5 +1,10 @@
 import type { NextAuthConfig } from 'next-auth';
 
+// Danh sách public routes không cần auth
+const PUBLIC_ROUTES = ['/login', '/register'];
+// Route gốc sau khi đăng nhập
+const DEFAULT_LOGIN_REDIRECT = '/';
+
 export const authConfig = {
   pages: {
     signIn: '/login',
@@ -7,19 +12,21 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
-      const isOnDashboard = nextUrl.pathname === '/';
-      const isOnAuthRoute = nextUrl.pathname.startsWith('/login') || nextUrl.pathname.startsWith('/register');
-      
-      if (isOnDashboard) {
-        if (isLoggedIn) return true;
-        return false; // Redirect unauthenticated users to login page
-      } else if (isOnAuthRoute) {
+      const isPublicRoute = PUBLIC_ROUTES.some(route =>
+        nextUrl.pathname.startsWith(route)
+      );
+
+      // Nếu đang ở auth route mà đã đăng nhập → redirect về dashboard
+      if (isPublicRoute) {
         if (isLoggedIn) {
-          return Response.redirect(new URL('/', nextUrl)); // Redirect to dashboard if trying to access auth pages while logged in
+          return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
         }
-        return true;
+        return true; // Cho phép vào trang login/register
       }
-      return true;
+
+      // Mọi route còn lại đều cần đăng nhập
+      return isLoggedIn;
+      // NextAuth tự động redirect về pages.signIn nếu return false
     },
     async session({ session, token }) {
       if (token.sub && session.user) {
@@ -32,7 +39,7 @@ export const authConfig = {
         token.sub = user.id;
       }
       return token;
-    }
+    },
   },
-  providers: [], // Add providers with an empty array for now
+  providers: [],
 } satisfies NextAuthConfig;

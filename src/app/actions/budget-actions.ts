@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { startOfMonth, endOfMonth } from "date-fns";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { ActionResult, actionSuccess, actionError } from "@/lib/action-types";
 
 const budgetSchema = z.object({
   categoryId: z.string().min(1, "Danh mục không được để trống"),
@@ -12,37 +13,40 @@ const budgetSchema = z.object({
   monthYear: z.date(),
 });
 
-export async function upsertBudget(data: z.infer<typeof budgetSchema>) {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Unauthorized");
-  const userId = session.user.id;
+export async function upsertBudget(
+  data: z.infer<typeof budgetSchema>
+): Promise<ActionResult> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+    const userId = session.user.id;
 
-  // Validation
-  const validated = budgetSchema.parse(data);
-  const normalizedMonth = startOfMonth(validated.monthYear);
+    const validated = budgetSchema.parse(data);
+    const normalizedMonth = startOfMonth(validated.monthYear);
 
-  const budget = await prisma.budget.upsert({
-    where: {
-      userId_categoryId_monthYear: {
+    await prisma.budget.upsert({
+      where: {
+        userId_categoryId_monthYear: {
+          userId,
+          categoryId: validated.categoryId,
+          monthYear: normalizedMonth,
+        },
+      },
+      update: { limitAmount: validated.limitAmount },
+      create: {
         userId,
         categoryId: validated.categoryId,
+        limitAmount: validated.limitAmount,
         monthYear: normalizedMonth,
       },
-    },
-    update: {
-      limitAmount: validated.limitAmount,
-    },
-    create: {
-      userId,
-      categoryId: validated.categoryId,
-      limitAmount: validated.limitAmount,
-      monthYear: normalizedMonth,
-    },
-  });
+    });
 
-  revalidatePath("/budgets");
-  revalidatePath("/");
-  return budget;
+    revalidatePath("/budgets");
+    revalidatePath("/");
+    return actionSuccess();
+  } catch (error) {
+    return actionError(error);
+  }
 }
 
 export async function getBudgetsWithProgress() {

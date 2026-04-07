@@ -27,6 +27,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { getFormOptions } from "@/app/actions/transaction-actions";
+import { formatCurrency, formatCurrencyCompact } from "@/lib/utils";
 
 type WalletItem = {
   id: string;
@@ -125,10 +126,6 @@ export default function WalletsPage() {
     return <IconComp className="h-5 w-5" />;
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-  };
-
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
@@ -154,20 +151,20 @@ export default function WalletsPage() {
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
                   <Label htmlFor="name">Tên ví</Label>
-                  <Input 
-                    id="name" 
-                    value={name} 
-                    onChange={(e) => setName(e.target.value)} 
-                    placeholder="VD: Techcombank, Tiền mặt..." 
+                  <Input
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="VD: Techcombank, Tiền mặt..."
                   />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="balance">Số dư ban đầu</Label>
-                  <Input 
-                    id="balance" 
-                    type="number" 
-                    value={balance} 
-                    onChange={(e) => setBalance(e.target.value)} 
+                  <Input
+                    id="balance"
+                    type="number"
+                    value={balance}
+                    onChange={(e) => setBalance(e.target.value)}
                   />
                 </div>
                 <div className="grid gap-2">
@@ -250,7 +247,7 @@ export default function WalletsPage() {
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Hủy</AlertDialogCancel>
-                          <AlertDialogAction 
+                          <AlertDialogAction
                             onClick={() => handleDelete(wallet.id)}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                           >

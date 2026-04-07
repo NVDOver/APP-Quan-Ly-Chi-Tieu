@@ -1,11 +1,11 @@
 import { getTransactions, getFormOptions } from "@/app/actions/transaction-actions";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -13,11 +13,20 @@ import { ArrowLeftRight, Filter } from "lucide-react";
 import { DeleteTransactionButton } from "@/components/delete-transaction-button";
 import { TransactionFilters } from "@/components/transaction-filters";
 import { PaginationNav } from "@/components/pagination-nav";
+import { formatCurrency, formatCurrencyCompact } from "@/lib/utils";
+import type { Transaction, Wallet, Category } from "@prisma/client";
+
+// Type chính xác từ Prisma (thay vì any)
+type TransactionWithRelations = Transaction & {
+  wallet: Wallet;
+  toWallet: Wallet | null;
+  category: Category | null;
+};
 
 export default async function TransactionsPage(props: {
-  searchParams: Promise<{ 
-    page?: string; 
-    type?: string; 
+  searchParams: Promise<{
+    page?: string;
+    type?: string;
     walletId?: string;
   }>;
 }) {
@@ -34,13 +43,6 @@ export default async function TransactionsPage(props: {
   });
 
   const { wallets } = await getFormOptions();
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(amount);
-  };
 
   return (
     <div className="space-y-6">
@@ -78,8 +80,7 @@ export default async function TransactionsPage(props: {
                 </TableCell>
               </TableRow>
             ) : (
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              transactions.map((t: any) => (
+              transactions.map((t: TransactionWithRelations) => (
                 <TableRow key={t.id} className="hover:bg-muted/30 transition-colors">
                   <TableCell className="font-medium">
                     {format(new Date(t.date), "dd/MM/yyyy")}
@@ -113,11 +114,10 @@ export default async function TransactionsPage(props: {
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <span className={`font-bold ${
-                      t.type === "INCOME" ? "text-emerald-600" : 
-                      t.type === "EXPENSE" ? "text-red-600" : 
-                      "text-blue-600"
-                    }`}>
+                    <span className={`font-bold ${t.type === "INCOME" ? "text-emerald-600" :
+                      t.type === "EXPENSE" ? "text-red-600" :
+                        "text-blue-600"
+                      }`}>
                       {t.type === "INCOME" ? "+" : t.type === "EXPENSE" ? "-" : ""}
                       {formatCurrency(Number(t.amount))}
                     </span>

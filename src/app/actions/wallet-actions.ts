@@ -4,17 +4,18 @@ import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { ActionResult, actionSuccess, actionError } from "@/lib/action-types";
 
 const walletSchema = z.object({
   name: z.string().min(1, "Tên ví không được để trống"),
-  balance: z.number().default(0),
+  balance: z.coerce.number().default(0),
   icon: z.string().optional(),
 });
 
-export async function createWallet(data: z.infer<typeof walletSchema>) {
+export async function createWallet(data: z.infer<typeof walletSchema>): Promise<ActionResult> {
   try {
     const session = await auth();
-    if (!session?.user?.id) throw new Error("Unauthorized");
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
     const userId = session.user.id;
 
     const validatedData = walletSchema.parse(data);
@@ -28,16 +29,16 @@ export async function createWallet(data: z.infer<typeof walletSchema>) {
 
     revalidatePath("/wallets");
     revalidatePath("/");
-    return { success: true };
+    return actionSuccess();
   } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : "Đã xảy ra lỗi" };
+    return actionError(error);
   }
 }
 
-export async function updateWallet(id: string, data: z.infer<typeof walletSchema>) {
+export async function updateWallet(id: string, data: z.infer<typeof walletSchema>): Promise<ActionResult> {
   try {
     const session = await auth();
-    if (!session?.user?.id) throw new Error("Unauthorized");
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
     const userId = session.user.id;
 
     const validatedData = walletSchema.parse(data);
@@ -49,30 +50,33 @@ export async function updateWallet(id: string, data: z.infer<typeof walletSchema
 
     revalidatePath("/wallets");
     revalidatePath("/");
-    return { success: true };
+    return actionSuccess();
   } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : "Đã xảy ra lỗi" };
+    return actionError(error);
   }
 }
 
-export async function deleteWallet(id: string) {
+export async function deleteWallet(id: string): Promise<ActionResult> {
   try {
     const session = await auth();
-    if (!session?.user?.id) throw new Error("Unauthorized");
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
     const userId = session.user.id;
 
-    // Ràng buộc: Không cho xóa ví nếu có giao dịch liên kết
     const transactionCount = await prisma.transaction.count({
       where: {
+        userId,
         OR: [
           { walletId: id },
-          { toWalletId: id }
-        ]
-      }
+          { toWalletId: id },
+        ],
+      },
     });
 
     if (transactionCount > 0) {
-      throw new Error("Không thể xóa ví đã có giao dịch. Hãy xóa các giao dịch trước.");
+      return {
+        success: false,
+        error: "Không thể xóa ví đã có giao dịch. Hãy xóa các giao dịch trước."
+      };
     }
 
     await prisma.wallet.delete({
@@ -81,8 +85,8 @@ export async function deleteWallet(id: string) {
 
     revalidatePath("/wallets");
     revalidatePath("/");
-    return { success: true };
+    return actionSuccess();
   } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : "Đã xảy ra lỗi" };
+    return actionError(error);
   }
 }

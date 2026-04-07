@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { createTransaction, getFormOptions } from "@/app/actions/transaction-actions";
+import { toast } from "sonner";
 
 const transactionBaseSchema = z.object({
   type: z.enum(["INCOME", "EXPENSE", "TRANSFER"]),
@@ -42,18 +43,32 @@ const transactionBaseSchema = z.object({
   note: z.string().optional(),
 });
 
-const transactionSchema = transactionBaseSchema.refine((data) => {
-  if (data.type === "TRANSFER") return !!data.toWalletId && data.walletId !== data.toWalletId;
-  return true;
-}, {
-  message: "Ví đích không hợp lệ",
-  path: ["toWalletId"]
-}).refine((data) => {
-  if (data.type !== "TRANSFER") return !!data.categoryId;
-  return true;
-}, {
-  message: "Vui lòng chọn danh mục",
-  path: ["categoryId"]
+// Cách tiếp cận tốt hơn — dùng superRefine (1 lần, không chain):
+const transactionSchema: z.ZodType<TransactionFormValues, any, any> = transactionBaseSchema.superRefine((data, ctx) => {
+  if (data.type === "TRANSFER") {
+    if (!data.toWalletId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Vui lòng chọn ví nhận",
+        path: ["toWalletId"],
+      });
+    }
+    if (data.walletId === data.toWalletId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Ví nguồn và ví nhận phải khác nhau",
+        path: ["toWalletId"],
+      });
+    }
+  } else {
+    if (!data.categoryId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Vui lòng chọn danh mục",
+        path: ["categoryId"],
+      });
+    }
+  }
 });
 
 type OptionType = {
@@ -63,7 +78,15 @@ type OptionType = {
   balance?: number;
 };
 
-type TransactionFormValues = z.infer<typeof transactionBaseSchema>;
+interface TransactionFormValues {
+  type: "INCOME" | "EXPENSE" | "TRANSFER";
+  walletId: string;
+  toWalletId?: string;
+  categoryId?: string;
+  amount: number;
+  date: string;
+  note?: string;
+}
 
 export function FloatingActionButton() {
   const [open, setOpen] = useState(false);
@@ -73,8 +96,7 @@ export function FloatingActionButton() {
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<TransactionFormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(transactionSchema) as any,
+    resolver: zodResolver(transactionSchema),
     defaultValues: {
       type: "EXPENSE",
       walletId: "",
@@ -102,10 +124,10 @@ export function FloatingActionButton() {
       setIsLoading(true);
       try {
         const data = await getFormOptions();
-        setWallets(data.wallets.map((w) => ({ 
-          id: w.id, 
-          name: w.name, 
-          balance: Number(w.balance) 
+        setWallets(data.wallets.map((w) => ({
+          id: w.id,
+          name: w.name,
+          balance: Number(w.balance)
         })));
         setCategories(data.categories as OptionType[]);
       } finally {
@@ -130,9 +152,10 @@ export function FloatingActionButton() {
         ...values,
         date: new Date(values.date),
       };
-      
+
       const res = await createTransaction(dataToSubmit);
       if (res.success) {
+        toast.success("Tạo giao dịch thành công");
         setOpen(false);
         form.reset({
           type: "EXPENSE",
@@ -140,7 +163,7 @@ export function FloatingActionButton() {
           date: new Date().toISOString().split('T')[0],
         });
       } else {
-        alert(res.error || "Gặp lỗi khi tạo giao dịch");
+        toast.error(res.error || "Gặp lỗi khi tạo giao dịch");
       }
     });
   }
@@ -159,13 +182,13 @@ export function FloatingActionButton() {
             Ghi chép một khoản thu, chi hoặc chuyển khoản.
           </DialogDescription>
         </DialogHeader>
-        
+
         {isLoading ? (
           <div className="py-8 text-center text-sm text-muted-foreground">Đang tải dữ liệu...</div>
         ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField<TransactionFormValues, "type">
+              <FormField
                 control={form.control}
                 name="type"
                 render={({ field }) => (
@@ -189,7 +212,7 @@ export function FloatingActionButton() {
               />
 
               <div className="grid grid-cols-2 gap-4">
-                <FormField<TransactionFormValues, "amount">
+                <FormField
                   control={form.control}
                   name="amount"
                   render={({ field }) => (
@@ -202,7 +225,7 @@ export function FloatingActionButton() {
                     </FormItem>
                   )}
                 />
-                <FormField<TransactionFormValues, "date">
+                <FormField
                   control={form.control}
                   name="date"
                   render={({ field }) => (
@@ -217,7 +240,7 @@ export function FloatingActionButton() {
                 />
               </div>
 
-              <FormField<TransactionFormValues, "walletId">
+              <FormField
                 control={form.control}
                 name="walletId"
                 render={({ field }) => (
@@ -241,7 +264,7 @@ export function FloatingActionButton() {
               />
 
               {selectedType === "TRANSFER" ? (
-                <FormField<TransactionFormValues, "toWalletId">
+                <FormField
                   control={form.control}
                   name="toWalletId"
                   render={({ field }) => (
@@ -264,7 +287,7 @@ export function FloatingActionButton() {
                   )}
                 />
               ) : (
-                <FormField<TransactionFormValues, "categoryId">
+                <FormField
                   control={form.control}
                   name="categoryId"
                   render={({ field }) => (
@@ -291,7 +314,7 @@ export function FloatingActionButton() {
                 />
               )}
 
-              <FormField<TransactionFormValues, "note">
+              <FormField
                 control={form.control}
                 name="note"
                 render={({ field }) => (

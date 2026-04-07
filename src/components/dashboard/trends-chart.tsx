@@ -10,21 +10,12 @@ import {
   ResponsiveContainer,
   Legend
 } from 'recharts';
-
+import { formatCurrency, formatCurrencyCompact } from "@/lib/utils";
 interface TrendsChartProps {
   data: { label: string; income: number; expense: number }[];
 }
 
 export function TrendsChart({ data }: TrendsChartProps) {
-  // Format currency for Tooltip
-  const formatValue = (value: number) => {
-    return new Intl.NumberFormat('vi-VN', { 
-      style: 'currency', 
-      currency: 'VND',
-      maximumFractionDigits: 0 
-    }).format(value);
-  };
-
   return (
     <div className="h-[400px] w-full mt-4">
       <ResponsiveContainer width="100%" height="100%">
@@ -39,57 +30,56 @@ export function TrendsChart({ data }: TrendsChartProps) {
         >
           <defs>
             <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
-              <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+              <stop offset="5%" stopColor="#10b981" stopOpacity={0.1} />
+              <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
             </linearGradient>
             <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#ef4444" stopOpacity={0.1}/>
-              <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+              <stop offset="5%" stopColor="#ef4444" stopOpacity={0.1} />
+              <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-          <XAxis 
-            dataKey="label" 
+          <XAxis
+            dataKey="label"
             axisLine={false}
             tickLine={false}
             tick={{ fill: '#64748b', fontSize: 12 }}
             dy={10}
           />
-          <YAxis 
+          <YAxis
             axisLine={false}
             tickLine={false}
             tick={{ fill: '#64748b', fontSize: 10 }}
-            tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`}
+            tickFormatter={(value) => formatCurrencyCompact(value)}
           />
-          <Tooltip 
-            contentStyle={{ 
-              backgroundColor: 'rgba(255, 255, 255, 0.8)', 
-              borderRadius: '12px', 
-              border: 'none', 
+          <Tooltip
+            contentStyle={{
+              backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              borderRadius: '12px',
+              border: 'none',
               boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
               backdropFilter: 'blur(8px)'
             }}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            formatter={(value: any) => [formatValue(Number(value || 0)), ""]}
+            formatter={(value: string | number | undefined | readonly (string | number)[]) => [formatCurrency(Number(value || 0)), ""]}
           />
-          <Legend verticalAlign="top" height={36}/>
-          <Area 
-            type="monotone" 
-            dataKey="income" 
+          <Legend verticalAlign="top" height={36} />
+          <Area
+            type="monotone"
+            dataKey="income"
             name="Thu nhập"
-            stroke="#10b981" 
+            stroke="#10b981"
             strokeWidth={3}
-            fillOpacity={1} 
-            fill="url(#colorIncome)" 
+            fillOpacity={1}
+            fill="url(#colorIncome)"
           />
-          <Area 
-            type="monotone" 
-            dataKey="expense" 
+          <Area
+            type="monotone"
+            dataKey="expense"
             name="Chi tiêu"
-            stroke="#ef4444" 
+            stroke="#ef4444"
             strokeWidth={3}
-            fillOpacity={1} 
-            fill="url(#colorExpense)" 
+            fillOpacity={1}
+            fill="url(#colorExpense)"
           />
         </AreaChart>
       </ResponsiveContainer>
