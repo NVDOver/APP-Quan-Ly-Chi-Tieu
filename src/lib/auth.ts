@@ -5,13 +5,18 @@ import { z } from 'zod';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
-if (!process.env.AUTH_SECRET && process.env.NODE_ENV === 'production') {
-  process.env.AUTH_SECRET = 'baicuoiki-secret-key-fallback-32-chars-long';
+// Cố định cấu hình để tránh lỗi Vercel Dashboard
+if (process.env.NODE_ENV === 'production') {
+  delete process.env.NEXTAUTH_URL;
+  delete process.env.AUTH_URL;
+  if (!process.env.AUTH_SECRET) {
+    process.env.AUTH_SECRET = 'baicuoiki-super-secret-key-for-v5-32-chars';
+  }
 }
 
 export const { auth, signIn, signOut, handlers } = NextAuth({
   ...authConfig,
-  secret: process.env.AUTH_SECRET || 'baicuoiki-super-secret-key-for-v5-32-chars',
+  secret: process.env.AUTH_SECRET,
   trustHost: true,
   providers: [
     Credentials({
