@@ -62,22 +62,8 @@ export async function deleteWallet(id: string): Promise<ActionResult> {
     if (!session?.user?.id) return { success: false, error: "Unauthorized" };
     const userId = session.user.id;
 
-    const transactionCount = await prisma.transaction.count({
-      where: {
-        userId,
-        OR: [
-          { walletId: id },
-          { toWalletId: id },
-        ],
-      },
-    });
-
-    if (transactionCount > 0) {
-      return {
-        success: false,
-        error: "Không thể xóa ví đã có giao dịch. Hãy xóa các giao dịch trước."
-      };
-    }
+    // Không cần check transactionCount nữa vì Prisma đã có onDelete: Cascade
+    // Xóa ví đồng nghĩa với việc xóa tất cả giao dịch liên quan
 
     await prisma.wallet.delete({
       where: { id, userId },

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { motion } from 'framer-motion';
 
 import { 
   LayoutDashboard, 
@@ -39,18 +40,31 @@ export function Sidebar() {
             <div className="space-y-1">
               {menuItems.map((item) => {
                 const Icon = item.icon;
+                const isActive = pathname === item.href;
+                
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-3 rounded-lg px-4 py-2.5 font-medium text-sm transition-all duration-200 ${
-                      pathname === item.href 
-                        ? 'bg-primary text-primary-foreground shadow-sm ring-1 ring-primary/20' 
+                    className={`relative flex items-center gap-3 rounded-lg px-4 py-2.5 font-medium text-sm transition-colors duration-200 ${
+                      isActive 
+                        ? 'text-primary-foreground' 
                         : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                     }`}
                   >
-                    <Icon className={`h-4 w-4 ${pathname === item.href ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
-                    {item.name}
+                    {isActive && (
+                      <motion.div
+                        layoutId="active-nav-item"
+                        className="absolute inset-0 bg-primary rounded-lg shadow-sm shadow-primary/20"
+                        transition={{
+                          type: "spring",
+                          stiffness: 380,
+                          damping: 30
+                        }}
+                      />
+                    )}
+                    <Icon className={`relative z-10 h-4 w-4 ${isActive ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
+                    <span className="relative z-10">{item.name}</span>
                   </Link>
                 );
               })}

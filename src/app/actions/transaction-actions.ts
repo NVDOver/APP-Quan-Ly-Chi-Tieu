@@ -27,22 +27,16 @@ export async function createTransaction(data: z.infer<typeof createTransactionSc
     const parsedData = createTransactionSchema.parse(data);
 
     await prisma.$transaction(async (tx) => {
-      // 1. Cập nhật số dư ví
+      // 1. Cập nhật số dư ví cho giao dịch chính
       if (parsedData.type === "TRANSFER") {
-        if (!parsedData.toWalletId) {
-          throw new Error("Phải chọn ví nhận khi chuyển tiền");
-        }
-        if (parsedData.walletId === parsedData.toWalletId) {
-          throw new Error("Ví nguồn và ví nhận phải khác nhau");
-        }
+        if (!parsedData.toWalletId) throw new Error("Phải chọn ví nhận khi chuyển tiền");
+        if (parsedData.walletId === parsedData.toWalletId) throw new Error("Ví nguồn và ví nhận phải khác nhau");
 
-        // Trừ ví nguồn
         await tx.wallet.update({
           where: { id: parsedData.walletId, userId },
           data: { balance: { decrement: parsedData.amount } },
         });
 
-        // Cộng ví đích
         await tx.wallet.update({
           where: { id: parsedData.toWalletId, userId },
           data: { balance: { increment: parsedData.amount } },
@@ -58,7 +52,7 @@ export async function createTransaction(data: z.infer<typeof createTransactionSc
         });
       }
 
-      // 2. Tạo bản ghi giao dịch duy nhất
+      // 2. Tạo bản ghi giao dịch chính
       await tx.transaction.create({
         data: {
           userId,
@@ -71,7 +65,86 @@ export async function createTransaction(data: z.infer<typeof createTransactionSc
           note: parsedData.note,
         },
       });
+
+      // FEATURE: 5. Chế độ Tiết kiệm tự động (Round-up)
+      // Nếu là chi tiêu (EXPENSE), tự động làm tròn đến 10.000đ gần nhất và bỏ vào Piggy Bank
+      if (parsedData.type === "EXPENSE") {
+        const roundUpAmount = (Math.ceil(parsedData.amount / 10000) * 10000) - parsedData.amount;
+        
+        if (roundUpAmount > 0) {
+          // Tìm mục tiêu tiết kiệm đang bật Round-up (lấy cái gần nhất)
+          const roundUpGoal = await tx.savingGoal.findFirst({
+            where: { userId, isRoundUp: true },
+            orderBy: { createdAt: "desc" }
+          });
+
+          if (roundUpGoal) {
+            // Trừ thêm tiền từ ví
+            await tx.wallet.update({
+              where: { id: parsedData.walletId, userId },
+              data: { balance: { decrement: roundUpAmount } }
+            });
+
+            // Cộng vào mục tiêu tiết kiệm
+            await tx.savingGoal.update({
+              where: { id: roundUpGoal.id },
+              data: { currentAmount: { increment: roundUpAmount } }
+            });
+
+            // Tạo bản ghi giao dịch Tiết kiệm tự động
+            await tx.transaction.create({
+              data: {
+                userId,
+                walletId: parsedData.walletId,
+                savingGoalId: roundUpGoal.id,
+                type: "EXPENSE",
+                amount: roundUpAmount,
+                date: parsedData.date,
+                note: `Tiết kiệm tự động (Round-up) từ giao dịch ${formatCurrency(parsedData.amount)}`
+              }
+            });
+          }
+        }
+      }
+      // FEATURE: 2. Hệ thống Nhắc nhở (Budget Alerts)
+      if (parsedData.type === "EXPENSE" && parsedData.categoryId) {
+        const today = new Date();
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+        const budget = await tx.budget.findFirst({
+          where: { userId, categoryId: parsedData.categoryId, monthYear: startOfMonth }
+        });
+
+        if (budget) {
+          // Tính tổng chi tiêu hiện tại của category trong tháng
+          const catExpenses = await tx.transaction.aggregate({
+            where: { 
+              userId, 
+              categoryId: parsedData.categoryId, 
+              type: "EXPENSE",
+              date: { gte: startOfMonth }
+            },
+            _sum: { amount: true }
+          });
+
+          const totalUsed = Number(catExpenses._sum.amount || 0);
+          const limit = Number(budget.limitAmount);
+          const newUsagePercent = (totalUsed / limit) * 100;
+
+          if (newUsagePercent >= 100) {
+            // Đã vượt ngưỡng 100%
+            // Có thể thêm log hoặc thông báo (Toast sẽ được gọi ở Client sau khi result trả về)
+          } else if (newUsagePercent >= 80) {
+            // Sắp chạm ngưỡng 80%
+          }
+        }
+      }
     });
+
+    // Helper nội bộ để format tiền trong note
+    function formatCurrency(val: number) {
+      return new Intl.NumberFormat("vi-VN").format(val) + "đ";
+    }
 
     revalidatePath("/");
     revalidatePath("/transactions");

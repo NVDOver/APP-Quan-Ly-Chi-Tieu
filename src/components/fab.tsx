@@ -189,11 +189,11 @@ export function FloatingActionButton() {
                     <FormLabel>Loại giao dịch</FormLabel>
                     <select
                       {...field}
-                      className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      className="flex h-10 w-full rounded-xl border border-input bg-muted/40 px-3 py-2 text-sm shadow-sm transition-all focus:bg-background focus:ring-2 focus:ring-primary/20 outline-none appearance-none cursor-pointer"
                     >
-                      <option value="EXPENSE">Chi tiêu</option>
-                      <option value="INCOME">Thu nhập</option>
-                      <option value="TRANSFER">Chuyển tiền</option>
+                      <option value="EXPENSE">💸 Chi tiêu</option>
+                      <option value="INCOME">💰 Thu nhập</option>
+                      <option value="TRANSFER">🔄 Chuyển tiền</option>
                     </select>
                     <FormMessage />
                   </FormItem>
@@ -233,7 +233,7 @@ export function FloatingActionButton() {
                     <FormLabel>{selectedType === "TRANSFER" ? "Từ Ví" : "Ví thanh toán"}</FormLabel>
                     <select
                       {...field}
-                      className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      className="flex h-10 w-full rounded-xl border border-input bg-muted/40 px-3 py-2 text-sm shadow-sm transition-all focus:bg-background focus:ring-2 focus:ring-primary/20 outline-none appearance-none cursor-pointer"
                     >
                       <option value="">-- Chọn ví --</option>
                       {wallets.map(w => (
@@ -254,7 +254,7 @@ export function FloatingActionButton() {
                       <FormLabel>Đến Ví</FormLabel>
                       <select
                         {...field}
-                        className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        className="flex h-10 w-full rounded-xl border border-input bg-muted/40 px-3 py-2 text-sm shadow-sm transition-all focus:bg-background focus:ring-2 focus:ring-primary/20 outline-none appearance-none cursor-pointer"
                       >
                         <option value="">-- Chọn ví nhận --</option>
                         {wallets.filter(w => w.id !== selectedWalletId).map(w => (
@@ -274,7 +274,7 @@ export function FloatingActionButton() {
                       <FormLabel>Danh mục</FormLabel>
                       <select
                         {...field}
-                        className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        className="flex h-10 w-full rounded-xl border border-input bg-muted/40 px-3 py-2 text-sm shadow-sm transition-all focus:bg-background focus:ring-2 focus:ring-primary/20 outline-none appearance-none cursor-pointer"
                       >
                         <option value="">-- Chọn danh mục --</option>
                         {filteredCategories.map(c => (

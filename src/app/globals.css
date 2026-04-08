@@ -16,6 +16,18 @@
   
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   
   --color-border: var(--border);
   --color-input: var(--input);
@@ -89,37 +101,75 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    scroll-behavior: smooth;
+  }
   body {
     @apply bg-background text-foreground selection:bg-primary/20;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    background-image: 
+      radial-gradient(at 0% 0%, oklch(0.65 0.18 160 / 0.05) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, oklch(0.72 0.16 165 / 0.05) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, oklch(0.45 0.15 220 / 0.05) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, oklch(0.65 0.18 160 / 0.03) 0px, transparent 50%);
+    background-attachment: fixed;
   }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-card/60 backdrop-blur-xl border border-border/50 shadow-xl;
-  }
-  
-  .premium-gradient-bg {
-    background: radial-gradient(circle at top right, oklch(0.72 0.16 165 / 0.05), transparent 40%),
-                radial-gradient(circle at bottom left, oklch(0.45 0.15 220 / 0.05), transparent 40%);
+    @apply bg-card/40 backdrop-blur-xl border border-border/50 shadow-xl transition-all duration-300;
+    box-shadow: 0 4px 24px -1px oklch(0 0 0 / 0.05);
   }
 
+  .glass-card:hover {
+    @apply bg-card/60 border-primary/20;
+    box-shadow: 0 12px 40px -2px oklch(0 0 0 / 0.1);
+  }
+  
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-br from-primary to-emerald-400;
+    @apply bg-clip-text text-transparent bg-gradient-to-br from-primary to-emerald-500;
   }
 
   .premium-card {
-    @apply relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-primary/5 hover:-translate-y-1;
+    @apply relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1.5;
   }
 
-  .premium-card::after {
+  .premium-card::before {
     content: "";
-    @apply absolute inset-0 opacity-0 transition-opacity duration-500 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none;
+    @apply absolute -inset-full rotate-45 bg-gradient-to-r from-transparent via-white/10 to-transparent transition-all duration-1000 opacity-0 pointer-events-none;
   }
 
-  .premium-card:hover::after {
-    @apply opacity-100;
+  .premium-card:hover::before {
+    @apply inset-full opacity-100;
+  }
+  
+  .glass-button {
+    @apply bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all active:scale-95 px-4 py-2 rounded-xl font-medium;
+  }
+
+  .btn-bounce {
+    @apply transition-transform active:scale-95 hover:scale-[1.02];
+  }
+
+  /* Ẩn scrollbar nhưng vẫn scroll được */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@layer utilities {
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  @keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
   }
 }
 
