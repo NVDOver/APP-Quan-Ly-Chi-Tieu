@@ -32,13 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
+
 import { toast } from "sonner";
 import { 
   createSavingGoal, 
@@ -69,16 +63,19 @@ import {
 type SavingGoal = {
   id: string;
   name: string;
-  targetAmount: number | { toString(): string }; // Prisma Decimal
-  currentAmount: number | { toString(): string };
+  targetAmount: number;
+  currentAmount: number;
   deadlineDate: Date;
+  isRoundUp?: boolean;
 };
 
 type Wallet = {
   id: string;
   name: string;
-  balance: number | { toString(): string };
+  balance: number;
 };
+
+import { FadeIn } from "@/components/fade-in";
 
 export default function SavingGoalsPage() {
   const [goals, setGoals] = useState<SavingGoal[]>([]);
@@ -95,6 +92,7 @@ export default function SavingGoalsPage() {
   const [goalName, setGoalName] = useState("");
   const [targetAmount, setTargetAmount] = useState("");
   const [deadline, setDeadline] = useState("");
+  const [isRoundUp, setIsRoundUp] = useState(false);
   
   const [contributionAmount, setContributionAmount] = useState("");
   const [selectedWalletId, setSelectedWalletId] = useState("");
@@ -106,7 +104,12 @@ export default function SavingGoalsPage() {
         getSavingGoals(),
         getFormOptions()
       ]);
-      setGoals(goalsData as SavingGoal[]);
+      const serializedGoals = goalsData.map((g) => ({
+        ...g,
+        targetAmount: Number(g.targetAmount),
+        currentAmount: Number(g.currentAmount),
+      }));
+      setGoals(serializedGoals as unknown as SavingGoal[]);
       setWallets(options.wallets as Wallet[]);
     } finally {
       setIsLoading(false);
@@ -121,6 +124,7 @@ export default function SavingGoalsPage() {
     setGoalName("");
     setTargetAmount("");
     setDeadline("");
+    setIsRoundUp(false);
     setEditingGoal(null);
   };
 
@@ -129,6 +133,7 @@ export default function SavingGoalsPage() {
     setGoalName(goal.name);
     setTargetAmount(Number(goal.targetAmount).toString());
     setDeadline(format(new Date(goal.deadlineDate), "yyyy-MM-dd"));
+    setIsRoundUp(!!goal.isRoundUp);
     setIsGoalDialogOpen(true);
   };
 
@@ -143,6 +148,7 @@ export default function SavingGoalsPage() {
       targetAmount: parseFloat(targetAmount),
       deadlineDate: new Date(deadline),
       currentAmount: editingGoal ? Number(editingGoal.currentAmount) : 0,
+      isRoundUp: isRoundUp,
     };
 
     let result;
@@ -212,19 +218,20 @@ export default function SavingGoalsPage() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Mục tiêu tiết kiệm</h2>
-          <p className="text-muted-foreground">Hiện thực hóa những ước mơ của bạn</p>
-        </div>
-        <Dialog open={isGoalDialogOpen} onOpenChange={(open) => {
-          setIsGoalDialogOpen(open);
-          if (!open) resetGoalForm();
-        }}>
-          <DialogTrigger render={<Button className="rounded-full shadow-lg" />}>
-            <Plus className="mr-2 h-4 w-4" /> Thêm mục tiêu
-          </DialogTrigger>
+    <div className="space-y-8 pb-10">
+      <FadeIn delay={0.1}>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight text-gradient">Mục tiêu tiết kiệm</h2>
+            <p className="text-muted-foreground">Hiện thực hóa những ước mơ của bạn</p>
+          </div>
+          <Dialog open={isGoalDialogOpen} onOpenChange={(open) => {
+            setIsGoalDialogOpen(open);
+            if (!open) resetGoalForm();
+          }}>
+            <DialogTrigger render={<Button className="rounded-full shadow-lg shadow-primary/10 hover:scale-105 transition-all" />}>
+              <Plus className="mr-2 h-4 w-4" /> Thêm mục tiêu
+            </DialogTrigger>
           <DialogContent className="sm:max-w-[425px] glass-effect border-none shadow-2xl">
             <form onSubmit={handleGoalSubmit}>
               <DialogHeader>
@@ -260,14 +267,35 @@ export default function SavingGoalsPage() {
                     onChange={(e) => setDeadline(e.target.value)} 
                   />
                 </div>
+                <div className="flex items-center space-x-2 mt-2 p-3 bg-primary/5 rounded-xl border border-primary/10">
+                  <input 
+                    type="checkbox" 
+                    id="is-round-up" 
+                    checked={isRoundUp} 
+                    onChange={(e) => setIsRoundUp(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <label
+                      htmlFor="is-round-up"
+                      className="text-sm font-bold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Bật Tiết kiệm tự động (Round-up)
+                    </label>
+                    <p className="text-[10px] text-muted-foreground">
+                      Tự động làm tròn chi tiêu đến 10.000đ và bỏ vào mục tiêu này.
+                    </p>
+                  </div>
+                </div>
               </div>
               <DialogFooter>
                 <Button type="submit" className="w-full">Lưu mục tiêu</Button>
               </DialogFooter>
             </form>
           </DialogContent>
-        </Dialog>
-      </div>
+          </Dialog>
+        </div>
+      </FadeIn>
 
       {isLoading ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -301,7 +329,10 @@ export default function SavingGoalsPage() {
                         <Pencil className="mr-2 h-4 w-4" /> Chỉnh sửa
                       </DropdownMenuItem>
                       <AlertDialog>
-                        <AlertDialogTrigger render={<DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive cursor-pointer" />}>
+                        <AlertDialogTrigger 
+                          nativeButton={false}
+                          render={<DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive cursor-pointer" />}
+                        >
                           <div className="flex items-center w-full">
                             <Trash2 className="mr-2 h-4 w-4" /> Xóa mục tiêu
                           </div>
@@ -329,7 +360,14 @@ export default function SavingGoalsPage() {
                       <Target className="h-5 w-5" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">{goal.name}</CardTitle>
+                      <div className="flex items-center gap-2">
+                        <CardTitle className="text-lg">{goal.name}</CardTitle>
+                        {goal.isRoundUp && (
+                          <span className="bg-primary/20 text-primary text-[8px] font-black uppercase px-1.5 py-0.5 rounded-full border border-primary/20">
+                            Round-up
+                          </span>
+                        )}
+                      </div>
                       <CardDescription className="flex items-center gap-1">
                         <Clock className="h-3 w-3" /> {daysLeft}
                       </CardDescription>
@@ -377,18 +415,18 @@ export default function SavingGoalsPage() {
                         <div className="grid gap-4 py-4">
                           <div className="grid gap-2">
                             <Label>Chọn ví nguồn</Label>
-                            <Select value={selectedWalletId} onValueChange={(val) => setSelectedWalletId(val || "")}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Chọn ví..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {wallets.map(w => (
-                                  <SelectItem key={w.id} value={w.id}>
-                                    {w.name} ({formatCurrency(Number(w.balance))})
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <select
+                              value={selectedWalletId}
+                              onChange={(e) => setSelectedWalletId(e.target.value)}
+                              className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            >
+                              <option value="">-- Chọn ví --</option>
+                              {wallets.map(w => (
+                                <option key={w.id} value={w.id}>
+                                  {w.name} ({formatCurrency(w.balance)})
+                                </option>
+                              ))}
+                            </select>
                           </div>
                           <div className="grid gap-2">
                             <Label>Số tiền nạp (VND)</Label>

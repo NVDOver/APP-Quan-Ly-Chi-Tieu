@@ -22,8 +22,8 @@ Khi tạo dự án mới trên Vercel, hãy thêm các biến sau vào mục **S
 | Biến | Giá trị / Gợi ý | Mục đích |
 | :--- | :--- | :--- |
 | `DATABASE_URL` | `postgresql://...` | Prisma kết nối DB |
-| `NEXTAUTH_SECRET` | `openssl rand -base64 32` | Bảo mật Session người dùng |
-| `NEXTAUTH_URL` | `https://your-domain.vercel.app` | URL chính của ứng dụng |
+| `AUTH_SECRET` | `openssl rand -base64 32` | Bảo mật Session người dùng (v5) |
+| `AUTH_URL` | `https://your-domain.vercel.app` | URL chính của ứng dụng |
 | `AUTH_TRUST_HOST` | `true` | Cần thiết cho NextAuth v5 trên Vercel |
 | `GEMINI_API_KEY` | `Lấy từ Google AI Studio` | Kích hoạt tính năng Cố vấn AI |
 

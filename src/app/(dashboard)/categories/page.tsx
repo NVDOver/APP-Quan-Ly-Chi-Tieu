@@ -73,6 +73,8 @@ const PRESET_COLORS = [
   "#ec4899", "#64748b"
 ];
 
+import { FadeIn } from "@/components/fade-in";
+
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -161,29 +163,29 @@ export default function CategoriesPage() {
   );
 
   const renderCategoryTable = (items: CategoryItem[]) => (
-    <div className="rounded-md border bg-card">
+    <div className="rounded-2xl border bg-card/50 backdrop-blur-sm overflow-hidden shadow-sm">
       <Table>
-        <TableHeader>
+        <TableHeader className="bg-muted/30">
           <TableRow className="hover:bg-transparent">
-            <TableHead className="w-[300px]">Tên danh mục</TableHead>
-            <TableHead>Biểu tượng & Màu sắc</TableHead>
-            <TableHead className="text-right">Thao tác</TableHead>
+            <TableHead className="w-[300px] font-bold">Tên danh mục</TableHead>
+            <TableHead className="font-bold">Biểu tượng & Màu sắc</TableHead>
+            <TableHead className="text-right font-bold">Thao tác</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {items.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={3} className="text-center py-12 text-muted-foreground italic">
                 Không tìm thấy danh mục nào.
               </TableCell>
             </TableRow>
           ) : (
             items.map((category) => (
-              <TableRow key={category.id} className="group">
-                <TableCell className="font-medium">
+              <TableRow key={category.id} className="group hover:bg-primary/5 transition-colors">
+                <TableCell className="font-bold">
                   <div className="flex items-center gap-3">
                     <div 
-                      className="h-8 w-8 rounded-full flex items-center justify-center bg-muted"
+                      className="h-10 w-10 rounded-2xl flex items-center justify-center bg-muted/50 transition-transform group-hover:scale-110"
                       style={{ border: `2px solid ${category.color || '#ddd'}` }}
                     >
                       {getIconComponent(category.icon || "ShoppingCart", category.color)}
@@ -193,7 +195,7 @@ export default function CategoriesPage() {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[10px] uppercase tracking-wider px-2">
+                    <Badge variant="outline" className="text-[10px] uppercase tracking-widest px-2 font-bold opacity-70">
                       {category.icon || "Default"}
                     </Badge>
                     <div 
@@ -203,15 +205,15 @@ export default function CategoriesPage() {
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
-                  <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(category)}>
-                      <Pencil className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                  <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-primary/10 hover:text-primary" onClick={() => handleOpenEdit(category)}>
+                      <Pencil className="h-4 w-4" />
                     </Button>
                     <AlertDialog>
-                      <AlertDialogTrigger render={<Button variant="ghost" size="icon" />}>
-                        <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                      <AlertDialogTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-destructive/10 hover:text-destructive" />}>
+                        <Trash2 className="h-4 w-4" />
                       </AlertDialogTrigger>
-                      <AlertDialogContent>
+                      <AlertDialogContent className="glass-effect border-none shadow-2xl rounded-3xl">
                         <AlertDialogHeader>
                           <AlertDialogTitle>Xác nhận xóa danh mục?</AlertDialogTitle>
                           <AlertDialogDescription>
@@ -219,10 +221,10 @@ export default function CategoriesPage() {
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Hủy</AlertDialogCancel>
+                          <AlertDialogCancel className="rounded-xl">Hủy</AlertDialogCancel>
                           <AlertDialogAction 
                             onClick={() => handleDelete(category.id)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl"
                           >
                             Xóa
                           </AlertDialogAction>
@@ -240,29 +242,30 @@ export default function CategoriesPage() {
   );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Danh mục phân loại</h2>
-          <p className="text-muted-foreground">Tổ chức các khoản chi tiêu và thu nhập của bạn</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="relative w-full md:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Tìm kiếm danh mục..." 
-              className="pl-9 bg-card/50" 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+    <div className="space-y-8 pb-10">
+      <FadeIn delay={0.1}>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight text-gradient">Danh mục phân loại</h2>
+            <p className="text-muted-foreground">Tổ chức các khoản chi tiêu và thu nhập của bạn</p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) resetForm();
-          }}>
-            <DialogTrigger render={<Button className="rounded-full shadow-lg" />}>
-              <Plus className="mr-2 h-4 w-4" /> Thêm danh mục
-            </DialogTrigger>
+          <div className="flex items-center gap-3">
+            <div className="relative w-full md:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Tìm kiếm danh mục..." 
+                className="pl-9 bg-card/50 rounded-xl" 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (!open) resetForm();
+            }}>
+              <DialogTrigger render={<Button className="rounded-full shadow-lg shadow-primary/10 hover:scale-105 transition-all px-6" />}>
+                <Plus className="mr-2 h-4 w-4" /> Thêm danh mục
+              </DialogTrigger>
             <DialogContent className="sm:max-w-[425px] glass-effect border-none shadow-2xl">
               <form onSubmit={handleSubmit}>
                 <DialogHeader>
@@ -329,6 +332,7 @@ export default function CategoriesPage() {
           </Dialog>
         </div>
       </div>
+    </FadeIn>
 
       <Tabs defaultValue="EXPENSE" className="w-full">
         <TabsList className="bg-muted/50 border mb-6">

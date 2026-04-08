@@ -1,9 +1,6 @@
-import NextAuth from 'next-auth';
-import { authConfig } from '@/lib/auth.config';
+import { auth } from '@/lib/auth';
 
-const { auth } = NextAuth(authConfig);
-export const proxy = auth;
-export default proxy;
+export default auth;
 
 export const config = {
   /*

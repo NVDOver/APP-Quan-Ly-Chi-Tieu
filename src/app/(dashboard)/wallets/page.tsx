@@ -43,6 +43,8 @@ const WALLET_ICONS = [
   { name: "Banknote", icon: Banknote },
 ];
 
+import { FadeIn } from "@/components/fade-in";
+
 export default function WalletsPage() {
   const [wallets, setWallets] = useState<WalletItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -127,19 +129,20 @@ export default function WalletsPage() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Ví của tôi</h2>
-          <p className="text-muted-foreground">Quản lý các tài khoản và nguồn tiền của bạn</p>
-        </div>
-        <Dialog open={isDialogOpen} onOpenChange={(open) => {
-          setIsDialogOpen(open);
-          if (!open) resetForm();
-        }}>
-          <DialogTrigger render={<Button className="rounded-full px-6 shadow-md hover:shadow-lg transition-all" />}>
-            <Plus className="mr-2 h-4 w-4" /> Thêm ví mới
-          </DialogTrigger>
+    <div className="space-y-8 pb-10">
+      <FadeIn delay={0.1}>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight text-gradient">Ví của tôi</h2>
+            <p className="text-muted-foreground">Quản lý các tài khoản và nguồn tiền của bạn</p>
+          </div>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) resetForm();
+          }}>
+            <DialogTrigger render={<Button className="rounded-full px-6 shadow-lg shadow-primary/20 hover:scale-105 transition-all" />}>
+              <Plus className="mr-2 h-4 w-4" /> Thêm ví mới
+            </DialogTrigger>
           <DialogContent className="sm:max-w-[425px] border-none shadow-2xl glass-effect">
             <form onSubmit={handleSubmit}>
               <DialogHeader>
@@ -190,8 +193,9 @@ export default function WalletsPage() {
               </DialogFooter>
             </form>
           </DialogContent>
-        </Dialog>
-      </div>
+          </Dialog>
+        </div>
+      </FadeIn>
 
       {isLoading ? (
         <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
@@ -224,40 +228,42 @@ export default function WalletsPage() {
                     <CardDescription className="text-xs">Tài khoản chính</CardDescription>
                   </div>
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" />}>
-                    <MoreVertical className="h-4 w-4" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="glass-effect">
-                    <DropdownMenuItem onClick={() => handleOpenEdit(wallet)} className="cursor-pointer">
-                      <Pencil className="mr-2 h-4 w-4" /> Sửa
-                    </DropdownMenuItem>
-                    <AlertDialog>
-                      <AlertDialogTrigger render={<DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive cursor-pointer" />}>
-                        <div className="flex items-center w-full">
-                          <Trash2 className="mr-2 h-4 w-4" /> Xóa
-                        </div>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Hành động này không thể hoàn tác. Ví &quot;{wallet.name}&quot; sẽ bị xóa vĩnh viễn khỏi hệ thống.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Hủy</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDelete(wallet.id)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            Xóa ví
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 rounded-full hover:bg-primary/10 hover:text-primary"
+                    onClick={() => handleOpenEdit(wallet)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  
+                  <AlertDialog>
+                    <AlertDialogTrigger 
+                      nativeButton={true}
+                      render={<Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-destructive/10 hover:text-destructive" />}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="glass-effect border-none shadow-2xl">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Bạn có chắc muốn xóa ví này?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Hành động này sẽ xóa vĩnh viễn ví &quot;{wallet.name}&quot; và TẤT CẢ giao dịch liên quan. Không thể hoàn tác.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel className="rounded-xl">Hủy</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(wallet.id)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl"
+                        >
+                          Xác nhận xóa
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold tracking-tight text-foreground">

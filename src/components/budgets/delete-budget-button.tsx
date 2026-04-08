@@ -43,7 +43,7 @@ export function DeleteBudgetButton({ budgetId }: { budgetId: string }) {
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger>
+      <AlertDialogTrigger nativeButton={false}>
         <div className="h-8 w-8 inline-flex items-center justify-center text-muted-foreground hover:text-rose-600 hover:bg-rose-100/50 rounded-full transition-colors cursor-pointer">
           <Trash2 className="h-4 w-4" />
         </div>

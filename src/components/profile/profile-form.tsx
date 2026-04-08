@@ -1,166 +1,105 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { updateProfile } from "@/app/actions/profile-actions";
 import { toast } from "sonner";
-import { Loader2, Save } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Save, User, Mail, Globe } from "lucide-react";
 
-const profileSchema = z.object({
-  fullName: z.string().min(2, "Họ tên phải có ít nhất 2 ký tự"),
-  email: z.string().email("Email không hợp lệ"),
-  avatarUrl: z.string().url().optional().or(z.literal("")),
-  currency: z.string().min(1, "Vui lòng chọn tiền tệ"),
-});
-
-type ProfileFormValues = z.infer<typeof profileSchema>;
+import { useCurrency } from "@/components/currency-provider";
 
 interface ProfileFormProps {
   user: {
     fullName: string | null;
     email: string;
-    avatarUrl: string | null;
-    currency: string;
+    avatarUrl?: string | null;
+    currency?: string;
   };
 }
 
-const currencies = [
-  { code: "VND", name: "Việt Nam Đồng", symbol: "₫" },
-  { code: "USD", name: "US Dollar", symbol: "$" },
-  { code: "EUR", name: "Euro", symbol: "€" },
-  { code: "JPY", name: "Japanese Yen", symbol: "¥" },
-  { code: "GBP", name: "British Pound", symbol: "£" },
-  { code: "AUD", name: "Australian Dollar", symbol: "A$" },
-  { code: "CAD", name: "Canadian Dollar", symbol: "C$" },
-  { code: "SGD", name: "Singapore Dollar", symbol: "S$" },
-  { code: "CNY", name: "Chinese Yuan", symbol: "¥" },
-  { code: "KRW", name: "South Korean Won", symbol: "₩" },
-];
-
 export function ProfileForm({ user }: ProfileFormProps) {
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const { currency, setCurrency } = useCurrency();
+  const [fullName, setFullName] = useState(user.fullName || "");
+  const [isPending, setIsPending] = useState(false);
 
-  const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileSchema),
-    defaultValues: {
-      fullName: user.fullName || "",
-      email: user.email,
-      avatarUrl: user.avatarUrl || "",
-      currency: user.currency || "VND",
-    },
-  });
-
-  async function onSubmit(values: ProfileFormValues) {
-    setLoading(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsPending(true);
+    
     try {
-      await updateProfile(values);
-      toast.success("Thông tin hồ sơ đã được cập nhật!");
-      router.refresh();
+      const result = await updateProfile({ fullName });
+      if (result.success) {
+        toast.success("Cập nhật thông tin thành công!");
+      } else {
+        toast.error(result.error || "Có lỗi xảy ra");
+      }
     } catch (error) {
-      console.error(error);
-      toast.error("Có lỗi xảy ra khi cập nhật hồ sơ.");
+      toast.error("Lỗi hệ thống");
     } finally {
-      setLoading(false);
+      setIsPending(false);
     }
-  }
+  };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid gap-4 md:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="fullName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Họ và Tên</FormLabel>
-                <FormControl>
-                  <Input placeholder="Nguyễn Văn A" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Địa chỉ Email</FormLabel>
-                <FormControl>
-                  <Input placeholder="example@gmail.com" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="fullName" className="text-xs font-bold uppercase text-muted-foreground ml-1">Họ và tên</Label>
+          <div className="relative">
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              id="fullName" 
+              value={fullName} 
+              onChange={(e) => setFullName(e.target.value)} 
+              placeholder="Nhập họ tên đầy đủ"
+              className="pl-10 h-12 bg-muted/20 border-none rounded-2xl focus-visible:ring-primary/20"
+            />
+          </div>
         </div>
 
-        <FormField
-          control={form.control}
-          name="avatarUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Link ảnh đại diện (Avatar URL)</FormLabel>
-              <FormControl>
-                <Input placeholder="https://example.com/avatar.png" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="space-y-2">
+          <Label htmlFor="email" className="text-xs font-bold uppercase text-muted-foreground ml-1">Địa chỉ Email</Label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              id="email" 
+              value={user.email} 
+              disabled 
+              className="pl-10 h-12 bg-muted/40 border-none rounded-2xl cursor-not-allowed opacity-70"
+            />
+          </div>
+          <p className="text-[10px] text-muted-foreground ml-1">* Email không thể thay đổi trực tiếp</p>
+        </div>
 
-        <FormField
-          control={form.control}
-          name="currency"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Đơn vị tiền tệ mặc định</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Chọn đơn vị tiền tệ" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {currencies.map((curr) => (
-                    <SelectItem key={curr.code} value={curr.code}>
-                       <span className="font-bold mr-2">{curr.code}</span> - {curr.name} ({curr.symbol})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="space-y-2">
+          <Label className="text-xs font-bold uppercase text-muted-foreground ml-1">Đơn vị tiền tệ mặc định</Label>
+          <div className="relative">
+            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value as "VND" | "USD")}
+              className="flex h-12 w-full rounded-2xl border-none bg-muted/20 pl-10 pr-3 py-1 text-sm shadow-inner transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+            >
+              <option value="VND">VND - Việt Nam Đồng</option>
+              <option value="USD">USD - Đô la Mỹ</option>
+              <option value="EUR">EUR - Đồng Euro</option>
+            </select>
+          </div>
+        </div>
+      </div>
 
-        <Button type="submit" className="w-full md:w-auto" disabled={loading}>
-          {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-          {loading ? "Đang lưu..." : "Cập nhật hồ sơ"}
+      <div className="flex justify-end pt-4">
+        <Button 
+          type="submit" 
+          disabled={isPending} 
+          className="rounded-full px-8 shadow-lg shadow-primary/20 hover:scale-105 transition-all"
+        >
+          <Save className="mr-2 h-4 w-4" /> 
+          {isPending ? "Đang lưu..." : "Lưu thay đổi"}
         </Button>
-      </form>
-    </Form>
+      </div>
+    </form>
   );
 }

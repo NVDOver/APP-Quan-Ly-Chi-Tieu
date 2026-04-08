@@ -27,24 +27,44 @@ export function SpendingPieChart({ data }: SpendingPieChartProps) {
         ) : (
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="45%"
-                innerRadius={60}
-                outerRadius={80}
-                paddingAngle={5}
-                dataKey="value"
-              >
-                {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip
-                formatter={(value: string | number | undefined | readonly (string | number)[]) => [formatCurrency(Number(value || 0)), "Chi tiêu"]}
-                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-              />
-              <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                <Pie
+                  data={data}
+                  cx="50%"
+                  cy="45%"
+                  innerRadius={70}
+                  outerRadius={95}
+                  paddingAngle={8}
+                  dataKey="value"
+                  stroke="none"
+                  cornerRadius={6}
+                >
+                  {data.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={entry.color} 
+                      className="hover:opacity-80 transition-opacity cursor-pointer outline-none" 
+                    />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value: any) => [formatCurrency(Number(value || 0)), "Chi tiêu"]}
+                  contentStyle={{ 
+                    borderRadius: '16px', 
+                    border: 'none', 
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    backdropFilter: 'blur(10px)',
+                    color: '#fff',
+                    boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' 
+                  }}
+                  itemStyle={{ color: '#fff' }}
+                />
+                <Legend 
+                  verticalAlign="bottom" 
+                  align="center"
+                  wrapperStyle={{ paddingTop: '20px' }} 
+                  iconType="circle" 
+                  formatter={(value) => <span className="text-xs font-bold text-muted-foreground">{value}</span>}
+                />
             </PieChart>
           </ResponsiveContainer>
         )}

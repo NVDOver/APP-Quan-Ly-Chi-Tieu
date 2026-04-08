@@ -57,16 +57,18 @@ export function IncomeVsExpenseChart({ data }: IncomeVsExpenseChartProps) {
               <Bar
                 dataKey="income"
                 name="Thu nhập"
-                fill="#10b981"
-                radius={[4, 4, 0, 0]}
-                barSize={12}
+                fill="oklch(0.65 0.18 160)" // Emerald
+                radius={[6, 6, 0, 0]}
+                barSize={16}
+                activeBar={{ fill: 'oklch(0.7 0.2 160)' }}
               />
               <Bar
                 dataKey="expense"
                 name="Chi tiêu"
-                fill="#ef4444"
-                radius={[4, 4, 0, 0]}
-                barSize={12}
+                fill="oklch(0.6 0.18 20)" // Rose-ish
+                radius={[6, 6, 0, 0]}
+                barSize={16}
+                activeBar={{ fill: 'oklch(0.65 0.2 20)' }}
               />
             </BarChart>
           </ResponsiveContainer>
