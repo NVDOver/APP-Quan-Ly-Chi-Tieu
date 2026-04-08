@@ -72,8 +72,9 @@ export default function RegisterPage() {
           router.push("/");
           router.refresh();
         }
-      } catch {
-        setError("Lỗi kết nối đến máy chủ.");
+      } catch (err: any) {
+        console.error("Registration error:", err);
+        setError(`Lỗi kết nối đến máy chủ: ${err.message || 'Unknown error'}`);
       }
     });
   }
