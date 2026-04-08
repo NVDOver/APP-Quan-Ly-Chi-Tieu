@@ -13,7 +13,8 @@ import {
   Target, 
   BarChart3, 
   Settings,
-  Repeat
+  Repeat,
+  HandCoins
 } from "lucide-react";
 
 export function Sidebar() {
@@ -26,6 +27,7 @@ export function Sidebar() {
     { name: "Ngân sách", href: "/budgets", icon: PieChart },
     { name: "Ví của tôi", href: "/wallets", icon: Wallet },
     { name: "Danh mục", href: "/categories", icon: Tags },
+    { name: "Ghi nợ & Cho vay", href: "/debt-loan", icon: HandCoins },
     { name: "Mục tiêu tiết kiệm", href: "/saving-goals", icon: Target },
     { name: "Trung tâm Báo cáo", href: "/reports", icon: BarChart3 },
     { name: "Cài đặt Tài khoản", href: "/profile", icon: Settings },

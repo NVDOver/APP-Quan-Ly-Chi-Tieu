@@ -22,6 +22,7 @@ model User {
   savingGoals           SavingGoal[]
   transactions          Transaction[]
   wallets               Wallet[]
+  debtsLoans           DebtLoan[]
 
   @@index([email])
   @@map("users")
@@ -39,6 +40,7 @@ model Wallet {
   recurringFromTransactions RecurringTransaction[] @relation("RecurringFromWallet")
   toTransactions            Transaction[]          @relation("ToWallet")
   fromTransactions          Transaction[]          @relation("FromWallet")
+  debtsLoans               DebtLoan[]
   user                      User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -79,10 +81,12 @@ model Transaction {
   updatedAt              DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
   savingGoalId           String?               @map("saving_goal_id")
   recurringTransactionId String?               @map("recurring_transaction_id")
+  debtLoanId             String?               @map("debt_loan_id")
   category               Category?             @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   recurringTransaction   RecurringTransaction? @relation(fields: [recurringTransactionId], references: [id])
   savingGoal             SavingGoal?           @relation(fields: [savingGoalId], references: [id], onDelete: SetNull)
   toWallet               Wallet?               @relation("ToWallet", fields: [toWalletId], references: [id], onDelete: SetNull)
+  debtLoan               DebtLoan?             @relation(fields: [debtLoanId], references: [id], onDelete: SetNull)
   user                   User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   wallet                 Wallet                @relation("FromWallet", fields: [walletId], references: [id], onDelete: Cascade)
 
@@ -91,6 +95,7 @@ model Transaction {
   @@index([categoryId])
   @@index([savingGoalId])
   @@index([recurringTransactionId])
+  @@index([debtLoanId])
   @@index([date])
   @@map("transactions")
 }
@@ -157,6 +162,41 @@ model RecurringTransaction {
   @@index([walletId])
   @@index([nextProcessingDate])
   @@map("recurring_transactions")
+}
+
+model DebtLoan {
+  id              String         @id @default(cuid())
+  userId          String         @map("user_id")
+  walletId        String         @map("wallet_id")
+  personName      String         @map("person_name")
+  type            DebtLoanType
+  status          DebtLoanStatus @default(OPEN)
+  amount          Decimal        @db.Decimal(19, 4)
+  remainingAmount Decimal        @map("remaining_amount") @db.Decimal(19, 4)
+  dueDate         DateTime?      @map("due_date") @db.Date
+  startDate       DateTime       @map("start_date") @db.Date
+  note            String?
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet          Wallet         @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  transactions    Transaction[]
+
+  @@index([userId])
+  @@index([walletId])
+  @@index([status])
+  @@map("debts_loans")
+}
+
+enum DebtLoanType {
+  DEBT
+  LOAN
+}
+
+enum DebtLoanStatus {
+  OPEN
+  PAID
 }
 
 enum CategoryType {

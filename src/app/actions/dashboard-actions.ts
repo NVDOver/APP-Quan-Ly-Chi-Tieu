@@ -60,6 +60,7 @@ export async function getDashboardStats() {
       };
     }).filter(item => item.value > 0);
 
+
     const barChartData = dailyStatsRaw.map(item => ({
       date: item.date_label,
       income: Number(item.income || 0),

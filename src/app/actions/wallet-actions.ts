@@ -76,3 +76,20 @@ export async function deleteWallet(id: string): Promise<ActionResult> {
     return actionError(error);
   }
 }
+
+export async function getWallets() {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) throw new Error("Unauthorized");
+    const userId = session.user.id;
+
+    const wallets = await prisma.wallet.findMany({
+      where: { userId },
+      orderBy: { name: "asc" },
+    });
+
+    return { success: true, wallets };
+  } catch (error) {
+    return { success: false, error: "Không thể lấy danh sách ví" };
+  }
+}
