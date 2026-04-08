@@ -11,19 +11,22 @@ import { IncomeVsExpenseChart } from "@/components/dashboard/income-expense-char
 import { BudgetAlerts } from "@/components/dashboard/budget-alerts";
 import { FadeIn } from "@/components/fade-in";
 import { AIAdvisor } from "@/components/dashboard/ai-advisor";
+import { TransactionMap, MapTransaction } from "@/components/dashboard/transaction-map";
 import { formatCurrency, formatCurrencyCompact } from "@/lib/utils";
+import { getTransactionLocations } from "@/app/actions/transaction-actions";
 
 export default async function DashboardPage() {
   const session = await auth();
   const userId = session!.user!.id;
 
   // Thực hiện truy vấn song song (Parallel Data Fetching)
-  const [wallets, categories, savingGoals, stats, dbUser] = await Promise.all([
+  const [wallets, categories, savingGoals, stats, dbUser, locationRes] = await Promise.all([
     prisma.wallet.findMany({ where: { userId } }),
     prisma.category.findMany({ where: { userId, isDeleted: false } }),
     prisma.savingGoal.findMany({ where: { userId } }),
     getDashboardStats(),
     prisma.user.findUnique({ where: { id: userId } }),
+    getTransactionLocations(),
   ]);
 
 
@@ -172,7 +175,14 @@ export default async function DashboardPage() {
           </div>
 
           <FadeIn delay={0.65} direction="up">
-            <AIAdvisor />
+            <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
+               <div className="lg:col-span-2">
+                 <AIAdvisor />
+               </div>
+               <div className="lg:col-span-1">
+                 <TransactionMap transactions={locationRes.success ? (locationRes.data as unknown as MapTransaction[]) : []} />
+               </div>
+            </div>
           </FadeIn>
 
           <div className="grid gap-4 md:grid-cols-2 mt-6">

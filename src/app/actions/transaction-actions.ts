@@ -14,6 +14,10 @@ const createTransactionSchema = z.object({
   amount: z.number().positive("Số tiền phải lớn hơn 0"),
   date: z.date(),
   note: z.string().optional(),
+  tagIds: z.array(z.string()).optional(),
+  locationName: z.string().optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
 });
 
 export async function createTransaction(data: z.infer<typeof createTransactionSchema>) {
@@ -59,7 +63,7 @@ export async function createTransaction(data: z.infer<typeof createTransactionSc
       }
 
       // 2. Tạo bản ghi giao dịch duy nhất
-      await tx.transaction.create({
+      const transaction = await tx.transaction.create({
         data: {
           userId,
           walletId: parsedData.walletId,
@@ -69,8 +73,22 @@ export async function createTransaction(data: z.infer<typeof createTransactionSc
           amount: parsedData.amount,
           date: parsedData.date,
           note: parsedData.note,
+          locationName: parsedData.locationName || null,
+          latitude: parsedData.latitude || null,
+          longitude: parsedData.longitude || null,
         },
       });
+
+      // 3. Gắn tags nếu có
+      if (parsedData.tagIds && parsedData.tagIds.length > 0) {
+        await Promise.all(
+          parsedData.tagIds.map((tagId) =>
+            tx.tagOnTransaction.create({
+              data: { tagId, transactionId: transaction.id },
+            })
+          )
+        );
+      }
     });
 
     revalidatePath("/");
@@ -184,6 +202,7 @@ export async function getTransactions(params: {
         wallet: true,
         toWallet: true,
         category: true,
+        tags: { include: { tag: true } },
       },
     }),
     prisma.transaction.count({ where }),
@@ -198,12 +217,44 @@ export async function getTransactions(params: {
 
 export async function getFormOptions() {
   const session = await auth();
-  if (!session?.user?.id) return { wallets: [], categories: [] };
+  if (!session?.user?.id) return { wallets: [], categories: [], tags: [] };
 
-  const [wallets, categories] = await Promise.all([
+  const [wallets, categories, tags] = await Promise.all([
     prisma.wallet.findMany({ where: { userId: session.user.id } }),
-    prisma.category.findMany({ where: { userId: session.user.id, isDeleted: false } })
+    prisma.category.findMany({ where: { userId: session.user.id, isDeleted: false } }),
+    prisma.tag.findMany({ where: { userId: session.user.id } })
   ]);
 
-  return { wallets, categories };
+  return { wallets, categories, tags };
+}
+
+export async function getTransactionLocations() {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, data: [] };
+  const userId = session.user.id;
+
+  try {
+    const transactions = await prisma.transaction.findMany({
+      where: {
+        userId,
+        latitude: { not: null },
+        longitude: { not: null },
+      },
+      select: {
+        id: true,
+        amount: true,
+        type: true,
+        locationName: true,
+        latitude: true,
+        longitude: true,
+        category: { select: { name: true } }
+      },
+      orderBy: { date: "desc" },
+      take: 50,
+    });
+
+    return { success: true, data: transactions };
+  } catch {
+    return { success: false, data: [] };
+  }
 }

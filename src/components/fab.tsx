@@ -32,6 +32,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { createTransaction, getFormOptions } from "@/app/actions/transaction-actions";
 import { toast } from "sonner";
+import { TagSelector } from "./tag-selector";
+import { LocationInput } from "./location-input";
+
+interface Tag {
+  id: string;
+  name: string;
+  color: string | null;
+}
 
 const transactionBaseSchema = z.object({
   type: z.enum(["INCOME", "EXPENSE", "TRANSFER"]),
@@ -41,6 +49,10 @@ const transactionBaseSchema = z.object({
   amount: z.coerce.number().positive("Số tiền phải lớn hơn 0"),
   date: z.string().refine((val) => !isNaN(Date.parse(val)), "Ngày không hợp lệ"),
   note: z.string().optional(),
+  tagIds: z.array(z.string()).optional(),
+  locationName: z.string().optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
 });
 
 // Cách tiếp cận tốt hơn — dùng superRefine (1 lần, không chain):
@@ -87,12 +99,17 @@ interface TransactionFormValues {
   amount: number;
   date: string;
   note?: string;
+  tagIds?: string[];
+  locationName?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export function FloatingActionButton() {
   const [open, setOpen] = useState(false);
   const [wallets, setWallets] = useState<OptionType[]>([]);
   const [categories, setCategories] = useState<OptionType[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -106,6 +123,8 @@ export function FloatingActionButton() {
       amount: 0,
       date: new Date().toISOString().split('T')[0],
       note: "",
+      tagIds: [],
+      locationName: "",
     },
   });
 
@@ -131,6 +150,7 @@ export function FloatingActionButton() {
           balance: Number(w.balance)
         })));
         setCategories(data.categories as OptionType[]);
+        setTags(data.tags.map(t => ({ id: t.id, name: t.name, color: t.color })));
       } finally {
         setIsLoading(false);
       }
@@ -162,6 +182,8 @@ export function FloatingActionButton() {
           type: "EXPENSE",
           amount: 0,
           date: new Date().toISOString().split('T')[0],
+          tagIds: [],
+          locationName: "",
         });
       } else {
         toast.error(res.error || "Gặp lỗi khi tạo giao dịch");
@@ -328,6 +350,36 @@ export function FloatingActionButton() {
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="tagIds"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <TagSelector 
+                        availableTags={tags} 
+                        selectedTagIds={field.value || []} 
+                        onChange={field.onChange} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="pt-2">
+                <LocationInput 
+                  onLocationChange={(data) => {
+                    form.setValue("locationName", data.name);
+                    form.setValue("latitude", data.lat);
+                    form.setValue("longitude", data.lng);
+                  }}
+                  initialValue={form.getValues("locationName")}
+                  initialLat={form.getValues("latitude")}
+                  initialLng={form.getValues("longitude")}
+                />
+              </div>
 
               <Button type="submit" className="w-full" disabled={isPending}>
                 {isPending ? "Đang xử lý..." : "Lưu giao dịch"}

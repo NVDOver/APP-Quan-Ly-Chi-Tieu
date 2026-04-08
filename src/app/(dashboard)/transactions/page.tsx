@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { ArrowLeftRight, Filter } from "lucide-react";
+import { ArrowLeftRight, Filter, MapPin } from "lucide-react";
 import { DeleteTransactionButton } from "@/components/delete-transaction-button";
 import { TransactionFilters } from "@/components/transaction-filters";
 import { PaginationNav } from "@/components/pagination-nav";
@@ -21,6 +21,10 @@ type TransactionWithRelations = Transaction & {
   wallet: Wallet;
   toWallet: Wallet | null;
   category: Category | null;
+  tags: { tag: { id: string, name: string, color: string | null } }[];
+  locationName: string | null;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 export default async function TransactionsPage(props: {
@@ -80,7 +84,7 @@ export default async function TransactionsPage(props: {
                 </TableCell>
               </TableRow>
             ) : (
-              transactions.map((t: TransactionWithRelations) => (
+              (transactions as unknown as TransactionWithRelations[]).map((t) => (
                 <TableRow key={t.id} className="hover:bg-muted/30 transition-colors">
                   <TableCell className="font-medium">
                     {format(new Date(t.date), "dd/MM/yyyy")}
@@ -94,10 +98,30 @@ export default async function TransactionsPage(props: {
                             Chuyển khoản
                           </div>
                         ) : (
-                          t.category?.name || "N/A"
+                          <div className="flex flex-wrap items-center gap-2">
+                             {t.category?.name || "N/A"}
+                             {t.tags && t.tags.length > 0 && (
+                               <div className="flex gap-1">
+                                 {t.tags.map(({ tag }) => (
+                                   <div 
+                                    key={tag.id} 
+                                    className="w-2 h-2 rounded-full" 
+                                    style={{ backgroundColor: tag.color || '#ccc' }}
+                                    title={`#${tag.name}`}
+                                   />
+                                 ))}
+                               </div>
+                             )}
+                          </div>
                         )}
                       </span>
                       {t.note && <span className="text-xs text-muted-foreground line-clamp-1">{t.note}</span>}
+                      {t.locationName && (
+                        <span className="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                          <MapPin className="h-2.5 w-2.5" />
+                          {t.locationName}
+                        </span>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>

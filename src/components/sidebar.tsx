@@ -13,6 +13,7 @@ export function Sidebar() {
     { name: "Ngân sách", href: "/budgets" },
     { name: "Ví của tôi", href: "/wallets" },
     { name: "Danh mục", href: "/categories" },
+    { name: "Quản lý Tag", href: "/tags" },
     { name: "Ghi nợ & Cho vay", href: "/debt-loan" },
     { name: "Mục tiêu tiết kiệm", href: "/saving-goals" },
     { name: "Trung tâm Báo cáo", href: "/reports" },

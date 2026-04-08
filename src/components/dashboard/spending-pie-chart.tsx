@@ -2,7 +2,7 @@
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrency, formatCurrencyCompact } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 
 interface SpendingPieChartProps {
   data: {
