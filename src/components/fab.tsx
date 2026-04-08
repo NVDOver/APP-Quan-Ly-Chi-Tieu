@@ -25,6 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { createTransaction, getFormOptions } from "@/app/actions/transaction-actions";
 import { toast } from "sonner";
+import { ReceiptScanner } from "./receipt-scanner";
 
 const transactionBaseSchema = z.object({
   type: z.enum(["INCOME", "EXPENSE", "TRANSFER"]),
@@ -182,6 +183,12 @@ export function FloatingActionButton() {
         ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <ReceiptScanner onScanComplete={(data) => {
+                if (data.amount) form.setValue("amount", data.amount);
+                if (data.date) form.setValue("date", data.date);
+                if (data.note) form.setValue("note", data.note);
+              }} />
+              
               <FormField
                 control={form.control}
                 name="type"
