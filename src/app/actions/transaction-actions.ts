@@ -14,6 +14,10 @@ const createTransactionSchema = z.object({
   amount: z.number().positive("Số tiền phải lớn hơn 0"),
   date: z.date(),
   note: z.string().optional(),
+  tagIds: z.array(z.string()).optional(),
+  locationName: z.string().optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
 });
 
 export async function createTransaction(data: z.infer<typeof createTransactionSchema>) {
@@ -53,7 +57,7 @@ export async function createTransaction(data: z.infer<typeof createTransactionSc
       }
 
       // 2. Tạo bản ghi giao dịch chính
-      await tx.transaction.create({
+      const transaction = await (tx.transaction as any).create({
         data: {
           userId,
           walletId: parsedData.walletId,
@@ -63,8 +67,22 @@ export async function createTransaction(data: z.infer<typeof createTransactionSc
           amount: parsedData.amount,
           date: parsedData.date,
           note: parsedData.note,
+          locationName: parsedData.locationName || null,
+          latitude: parsedData.latitude || null,
+          longitude: parsedData.longitude || null,
         },
       });
+
+      // 3. Gắn tags nếu có
+      if (parsedData.tagIds && parsedData.tagIds.length > 0) {
+        await Promise.all(
+          parsedData.tagIds.map((tagId) =>
+            (tx as any).tagOnTransaction.create({
+              data: { tagId, transactionId: transaction.id },
+            })
+          )
+        );
+      }
 
       // FEATURE: 5. Chế độ Tiết kiệm tự động (Round-up)
       // Nếu là chi tiêu (EXPENSE), tự động làm tròn đến 10.000đ gần nhất và bỏ vào Piggy Bank
@@ -133,7 +151,6 @@ export async function createTransaction(data: z.infer<typeof createTransactionSc
 
           if (newUsagePercent >= 100) {
             // Đã vượt ngưỡng 100%
-            // Có thể thêm log hoặc thông báo (Toast sẽ được gọi ở Client sau khi result trả về)
           } else if (newUsagePercent >= 80) {
             // Sắp chạm ngưỡng 80%
           }
@@ -248,7 +265,7 @@ export async function getTransactions(params: {
   }
 
   const [rawTransactions, total] = await Promise.all([
-    prisma.transaction.findMany({
+    (prisma.transaction as any).findMany({
       where,
       skip,
       take: pageSize,
@@ -257,13 +274,14 @@ export async function getTransactions(params: {
         wallet: true,
         toWallet: true,
         category: true,
+        tags: { include: { tag: true } },
       },
     }),
     prisma.transaction.count({ where }),
   ]);
 
   // Serialize Decimal → number để tránh lỗi khi truyền sang Client Components
-  const transactions = rawTransactions.map((t) => ({
+  const transactions = (rawTransactions as any).map((t: any) => ({
     ...t,
     amount: Number(t.amount),
     wallet: t.wallet ? { ...t.wallet, balance: Number(t.wallet.balance) } : t.wallet,
@@ -279,15 +297,47 @@ export async function getTransactions(params: {
 
 export async function getFormOptions() {
   const session = await auth();
-  if (!session?.user?.id) return { wallets: [], categories: [] };
+  if (!session?.user?.id) return { wallets: [], categories: [], tags: [] };
 
-  const [rawWallets, categories] = await Promise.all([
+  const [rawWallets, categories, tags] = await Promise.all([
     prisma.wallet.findMany({ where: { userId: session.user.id } }),
-    prisma.category.findMany({ where: { userId: session.user.id, isDeleted: false } })
+    prisma.category.findMany({ where: { userId: session.user.id, isDeleted: false } }),
+    (prisma as any).tag.findMany({ where: { userId: session.user.id } })
   ]);
 
   // Serialize Decimal → number để tránh lỗi khi truyền sang Client Components
-  const wallets = rawWallets.map((w) => ({ ...w, balance: Number(w.balance) }));
+  const wallets = (rawWallets as any).map((w: any) => ({ ...w, balance: Number(w.balance) }));
 
-  return { wallets, categories };
+  return { wallets, categories, tags };
+}
+
+export async function getTransactionLocations() {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, data: [] };
+  const userId = session.user.id;
+
+  try {
+    const transactions = await (prisma.transaction as any).findMany({
+      where: {
+        userId,
+        latitude: { not: null },
+        longitude: { not: null },
+      },
+      select: {
+        id: true,
+        amount: true,
+        type: true,
+        locationName: true,
+        latitude: true,
+        longitude: true,
+        category: { select: { name: true } }
+      },
+      orderBy: { date: "desc" },
+      take: 50,
+    });
+
+    return { success: true, data: transactions };
+  } catch {
+    return { success: false, data: [] };
+  }
 }

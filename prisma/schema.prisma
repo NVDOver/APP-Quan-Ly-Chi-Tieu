@@ -23,6 +23,7 @@ model User {
   transactions          Transaction[]
   wallets               Wallet[]
   debtsLoans           DebtLoan[]
+  tags                 Tag[]
 
   @@index([email])
   @@map("users")
@@ -77,6 +78,9 @@ model Transaction {
   note                   String?
   receiptUrl             String?               @map("receipt_url")
   type                   TransactionType
+  locationName           String?               @map("location_name")
+  latitude               Float?
+  longitude              Float?
   createdAt              DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt              DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
   savingGoalId           String?               @map("saving_goal_id")
@@ -89,6 +93,7 @@ model Transaction {
   debtLoan               DebtLoan?             @relation(fields: [debtLoanId], references: [id], onDelete: SetNull)
   user                   User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   wallet                 Wallet                @relation("FromWallet", fields: [walletId], references: [id], onDelete: Cascade)
+  tags                   TagOnTransaction[]
 
   @@index([userId])
   @@index([walletId])
@@ -98,6 +103,32 @@ model Transaction {
   @@index([debtLoanId])
   @@index([date])
   @@map("transactions")
+}
+
+model Tag {
+  id           String             @id @default(cuid())
+  userId       String             @map("user_id")
+  name         String
+  color        String?
+  createdAt    DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions TagOnTransaction[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("tags")
+}
+
+model TagOnTransaction {
+  tagId         String      @map("tag_id")
+  transactionId String      @map("transaction_id")
+  tag           Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@id([tagId, transactionId])
+  @@index([transactionId])
+  @@map("tags_on_transactions")
 }
 
 model SavingGoal {
