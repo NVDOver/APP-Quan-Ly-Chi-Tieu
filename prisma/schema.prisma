@@ -7,6 +7,158 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id                    String                 @id @default(cuid())
+  email                 String                 @unique
+  passwordHash          String                 @map("password_hash")
+  fullName              String?                @map("full_name")
+  currency              String                 @default("VND")
+  avatarUrl             String?                @map("avatar_url")
+  createdAt             DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  budgets               Budget[]
+  categories            Category[]
+  recurringTransactions RecurringTransaction[]
+  savingGoals           SavingGoal[]
+  transactions          Transaction[]
+  wallets               Wallet[]
+
+  @@index([email])
+  @@map("users")
+}
+
+model Wallet {
+  id                        String                 @id @default(cuid())
+  userId                    String                 @map("user_id")
+  name                      String
+  balance                   Decimal                @db.Decimal(19, 4)
+  icon                      String?
+  createdAt                 DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  recurringToTransactions   RecurringTransaction[] @relation("RecurringToWallet")
+  recurringFromTransactions RecurringTransaction[] @relation("RecurringFromWallet")
+  toTransactions            Transaction[]          @relation("ToWallet")
+  fromTransactions          Transaction[]          @relation("FromWallet")
+  user                      User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("wallets")
+}
+
+model Category {
+  id                    String                 @id @default(cuid())
+  userId                String                 @map("user_id")
+  name                  String
+  type                  CategoryType
+  icon                  String?
+  color                 String?
+  isDeleted             Boolean                @default(false) @map("is_deleted")
+  createdAt             DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  budgets               Budget[]
+  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recurringTransactions RecurringTransaction[]
+  transactions          Transaction[]
+
+  @@index([userId])
+  @@map("categories")
+}
+
+model Transaction {
+  id                     String                @id @default(cuid())
+  userId                 String                @map("user_id")
+  walletId               String                @map("wallet_id")
+  toWalletId             String?               @map("to_wallet_id")
+  categoryId             String?               @map("category_id")
+  amount                 Decimal               @db.Decimal(19, 4)
+  date                   DateTime              @db.Timestamptz(6)
+  note                   String?
+  receiptUrl             String?               @map("receipt_url")
+  type                   TransactionType
+  createdAt              DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  savingGoalId           String?               @map("saving_goal_id")
+  recurringTransactionId String?               @map("recurring_transaction_id")
+  category               Category?             @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  recurringTransaction   RecurringTransaction? @relation(fields: [recurringTransactionId], references: [id])
+  savingGoal             SavingGoal?           @relation(fields: [savingGoalId], references: [id], onDelete: SetNull)
+  toWallet               Wallet?               @relation("ToWallet", fields: [toWalletId], references: [id], onDelete: SetNull)
+  user                   User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet                 Wallet                @relation("FromWallet", fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([walletId])
+  @@index([categoryId])
+  @@index([savingGoalId])
+  @@index([recurringTransactionId])
+  @@index([date])
+  @@map("transactions")
+}
+
+model SavingGoal {
+  id            String        @id @default(cuid())
+  userId        String        @map("user_id")
+  name          String
+  isRoundUp     Boolean       @default(false) @map("is_round_up")
+  targetAmount  Decimal       @map("target_amount") @db.Decimal(19, 4)
+  currentAmount Decimal       @default(0) @map("current_amount") @db.Decimal(19, 4)
+  deadlineDate  DateTime      @map("deadline_date") @db.Date
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions  Transaction[]
+
+  @@index([userId])
+  @@map("saving_goals")
+}
+
+model Budget {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  categoryId  String?   @map("category_id")
+  limitAmount Decimal   @map("limit_amount") @db.Decimal(19, 4)
+  monthYear   DateTime  @map("month_year") @db.Date
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, categoryId, monthYear])
+  @@index([userId])
+  @@index([categoryId])
+  @@index([monthYear])
+  @@map("budgets")
+}
+
+model RecurringTransaction {
+  id                 String            @id @default(cuid())
+  userId             String            @map("user_id")
+  walletId           String            @map("wallet_id")
+  toWalletId         String?           @map("to_wallet_id")
+  categoryId         String?           @map("category_id")
+  amount             Decimal           @db.Decimal(19, 4)
+  type               TransactionType
+  note               String?
+  interval           RecurringInterval
+  status             RecurringStatus   @default(ACTIVE)
+  startDate          DateTime          @map("start_date") @db.Date
+  endDate            DateTime?         @map("end_date") @db.Date
+  nextProcessingDate DateTime          @map("next_processing_date") @db.Date
+  lastProcessedDate  DateTime?         @map("last_processed_date") @db.Date
+  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  category           Category?         @relation(fields: [categoryId], references: [id])
+  toWallet           Wallet?           @relation("RecurringToWallet", fields: [toWalletId], references: [id])
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet             Wallet            @relation("RecurringFromWallet", fields: [walletId], references: [id], onDelete: Cascade)
+  transactions       Transaction[]
+
+  @@index([userId])
+  @@index([walletId])
+  @@index([nextProcessingDate])
+  @@map("recurring_transactions")
+}
+
 enum CategoryType {
   INCOME
   EXPENSE
@@ -18,127 +170,15 @@ enum TransactionType {
   TRANSFER
 }
 
-model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String   @map("password_hash")
-  fullName     String?  @map("full_name")
-  currency     String   @default("VND")
-  avatarUrl    String?  @map("avatar_url")
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  wallets      Wallet[]
-  categories   Category[]
-  transactions Transaction[]
-  budgets      Budget[]
-  savingGoals  SavingGoal[]
-
-  @@index([email])
-  @@map("users")
+enum RecurringInterval {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
 }
 
-model Wallet {
-  id        String   @id @default(cuid())
-  userId    String   @map("user_id")
-  name      String
-  balance   Decimal  @db.Decimal(19, 4)
-  icon      String?
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  fromTransactions Transaction[] @relation("FromWallet")
-  toTransactions   Transaction[] @relation("ToWallet")
-
-  @@index([userId])
-  @@map("wallets")
+enum RecurringStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
 }
-
-model Category {
-  id        String       @id @default(cuid())
-  userId    String       @map("user_id")
-  name      String
-  type      CategoryType
-  icon      String?
-  color     String?
-  isDeleted Boolean      @default(false) @map("is_deleted")
-  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt DateTime     @updatedAt @map("updated_at") @db.Timestamptz
-
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactions Transaction[]
-  budgets      Budget[]
-
-  @@index([userId])
-  @@map("categories")
-}
-
-model Transaction {
-  id           String          @id @default(cuid())
-  userId       String          @map("user_id")
-  walletId     String          @map("wallet_id")
-  toWalletId   String?         @map("to_wallet_id")
-  categoryId   String?         @map("category_id")
-  savingGoalId String?         @map("saving_goal_id") // <- THÊM TRƯỜNG NÀY
-  amount       Decimal         @db.Decimal(19, 4)
-  date         DateTime        @db.Timestamptz
-  note         String?
-  receiptUrl   String?         @map("receipt_url")
-  type         TransactionType
-  createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt    DateTime        @updatedAt @map("updated_at") @db.Timestamptz
-
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  wallet      Wallet      @relation("FromWallet", fields: [walletId], references: [id], onDelete: Cascade)
-  toWallet    Wallet?     @relation("ToWallet", fields: [toWalletId], references: [id], onDelete: SetNull)
-  category    Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  savingGoal  SavingGoal? @relation(fields: [savingGoalId], references: [id], onDelete: SetNull) // <- THÊM RELATION
-
-  @@index([userId, date])
-  @@index([userId, type, date])
-  @@index([walletId])
-  @@index([categoryId])
-  @@index([savingGoalId])
-  @@index([date])
-  @@map("transactions")
-}
-
-model SavingGoal {
-  id            String   @id @default(cuid())
-  userId        String   @map("user_id")
-  name          String
-  isRoundUp     Boolean  @default(false) @map("is_round_up")
-  targetAmount  Decimal  @map("target_amount") @db.Decimal(19, 4)
-  currentAmount Decimal  @default(0) @map("current_amount") @db.Decimal(19, 4)
-  deadlineDate  DateTime @map("deadline_date") @db.Date
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactions Transaction[] // <- THÊM RELATION NGƯỢC
-
-  @@index([userId])
-  @@map("saving_goals")
-}
-
-model Budget {
-  id          String   @id @default(cuid())
-  userId      String   @map("user_id")
-  categoryId  String?  @map("category_id")
-  limitAmount Decimal  @map("limit_amount") @db.Decimal(19, 4)
-  monthYear   DateTime @map("month_year") @db.Date
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-
-  @@index([userId])
-  @@index([categoryId])
-  @@index([monthYear])
-  @@unique([userId, categoryId, monthYear])
-  @@map("budgets")
-}
-
-

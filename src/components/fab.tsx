@@ -37,6 +37,7 @@ const transactionBaseSchema = z.object({
 });
 
 // Cách tiếp cận tốt hơn — dùng superRefine (1 lần, không chain):
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const transactionSchema: z.ZodType<TransactionFormValues, any, any> = transactionBaseSchema.superRefine((data, ctx) => {
   if (data.type === "TRANSFER") {
     if (!data.toWalletId) {
