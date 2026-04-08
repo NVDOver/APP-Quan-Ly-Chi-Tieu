@@ -165,7 +165,7 @@ export async function getDebtsLoans() {
     if (!session?.user?.id) throw new Error("Unauthorized");
     const userId = session.user.id;
 
-    const data = await prisma.debtLoan.findMany({
+    const rawData = await prisma.debtLoan.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
       include: {
@@ -175,6 +175,21 @@ export async function getDebtsLoans() {
         }
       }
     });
+
+    // Chuyển đổi Decimal sang number để tránh lỗi Server Component
+    const data = rawData.map(item => ({
+        ...item,
+        amount: Number(item.amount),
+        remainingAmount: Number(item.remainingAmount),
+        wallet: item.wallet ? {
+            ...item.wallet,
+            balance: Number(item.wallet.balance)
+        } : null,
+        transactions: item.transactions.map(t => ({
+            ...t,
+            amount: Number(t.amount)
+        }))
+    }));
 
     return { success: true, data };
   } catch (error) {

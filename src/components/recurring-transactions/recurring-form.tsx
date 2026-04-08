@@ -121,18 +121,15 @@ export function RecurringForm({ wallets, categories }: RecurringFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Loại giao dịch</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Chọn loại phân loại" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="EXPENSE">Chi phí</SelectItem>
-                      <SelectItem value="INCOME">Thu nhập</SelectItem>
-                      <SelectItem value="TRANSFER">Chuyển tiền ví</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <select 
+                      value={field.value}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      onChange={(e) => field.onChange(e.target.value)}
+                    >
+                      <option value="EXPENSE">💸 Chi tiêu</option>
+                      <option value="INCOME">💰 Thu nhập</option>
+                      <option value="TRANSFER">🔄 Chuyển tiền</option>
+                    </select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -158,19 +155,16 @@ export function RecurringForm({ wallets, categories }: RecurringFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Chu kỳ lặp</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="DAILY">Hàng ngày</SelectItem>
-                          <SelectItem value="WEEKLY">Hàng tuần</SelectItem>
-                          <SelectItem value="MONTHLY">Hàng tháng</SelectItem>
-                          <SelectItem value="YEARLY">Hàng năm</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <select 
+                      value={field.value}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      onChange={(e) => field.onChange(e.target.value)}
+                    >
+                      <option value="DAILY">Hàng ngày</option>
+                      <option value="WEEKLY">Hàng tuần</option>
+                      <option value="MONTHLY">Hàng tháng</option>
+                      <option value="YEARLY">Hàng năm</option>
+                    </select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -183,18 +177,16 @@ export function RecurringForm({ wallets, categories }: RecurringFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{watchType === "TRANSFER" ? "Từ ví" : "Ví thanh toán"}</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Chọn ví" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {wallets.map((w) => (
-                        <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <select 
+                    value={field.value}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    onChange={(e) => field.onChange(e.target.value)}
+                  >
+                    <option value="">-- Chọn ví --</option>
+                    {wallets.map((w) => (
+                      <option key={w.id} value={w.id}>{w.name}</option>
+                    ))}
+                  </select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -207,18 +199,18 @@ export function RecurringForm({ wallets, categories }: RecurringFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Đến ví</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn ví đích" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {wallets.map((w) => (
-                          <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <select 
+                      value={field.value}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      onChange={(e) => field.onChange(e.target.value)}
+                    >
+                      <option value="">-- Chọn ví --</option>
+                      {wallets.map((wallet) => (
+                        <option key={wallet.id} value={wallet.id}>
+                          {wallet.name}
+                        </option>
+                      ))}
+                    </select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -232,18 +224,18 @@ export function RecurringForm({ wallets, categories }: RecurringFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Danh mục</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn danh mục" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {filteredCategories.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <select 
+                      value={field.value}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      onChange={(e) => field.onChange(e.target.value)}
+                    >
+                      <option value="">-- Chọn danh mục --</option>
+                      {filteredCategories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
                     <FormMessage />
                   </FormItem>
                 )}

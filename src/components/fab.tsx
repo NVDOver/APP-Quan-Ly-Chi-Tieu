@@ -34,6 +34,7 @@ import { createTransaction, getFormOptions } from "@/app/actions/transaction-act
 import { toast } from "sonner";
 import { TagSelector } from "./tag-selector";
 import { LocationInput } from "./location-input";
+import { ReceiptScanner } from "./receipt-scanner";
 
 interface Tag {
   id: string;
@@ -144,13 +145,20 @@ export function FloatingActionButton() {
       setIsLoading(true);
       try {
         const data = await getFormOptions();
-        setWallets(data.wallets.map((w) => ({
+        console.log("FAB Options:", data);
+        setWallets(data.wallets.map((w: any) => ({
           id: w.id,
-          name: w.name,
+          name: w.name || "Ví không tên",
           balance: Number(w.balance)
         })));
-        setCategories(data.categories as OptionType[]);
-        setTags(data.tags.map(t => ({ id: t.id, name: t.name, color: t.color })));
+        setCategories(data.categories.map((c: any) => ({
+          id: c.id,
+          name: c.name || "Danh mục không tên",
+          type: c.type
+        })));
+        if (data.tags) {
+          setTags(data.tags.map((t: any) => ({ id: t.id, name: t.name, color: t.color })));
+        }
       } finally {
         setIsLoading(false);
       }
@@ -211,24 +219,27 @@ export function FloatingActionButton() {
         ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <ReceiptScanner onScanComplete={(data) => {
+                if (data.amount) form.setValue("amount", data.amount);
+                if (data.date) form.setValue("date", data.date);
+                if (data.note) form.setValue("note", data.note);
+              }} />
+              
               <FormField
                 control={form.control}
                 name="type"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Loại giao dịch</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn loại giao dịch" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="EXPENSE">Chi tiêu</SelectItem>
-                        <SelectItem value="INCOME">Thu nhập</SelectItem>
-                        <SelectItem value="TRANSFER">Chuyển tiền</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <select 
+                      value={field.value}
+                      className="flex h-10 w-full rounded-xl border border-input bg-muted/40 px-3 py-2 text-sm shadow-sm transition-all focus:bg-background focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer"
+                      onChange={(e) => field.onChange(e.target.value)}
+                    >
+                      <option value="EXPENSE">💸 Chi tiêu</option>
+                      <option value="INCOME">💰 Thu nhập</option>
+                      <option value="TRANSFER">🔄 Chuyển tiền</option>
+                    </select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -241,9 +252,7 @@ export function FloatingActionButton() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Số tiền</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="50000" {...field} />
-                      </FormControl>
+                      <Input type="number" placeholder="50000" {...field} />
                       <FormMessage />
                     </FormItem>
                   )}
@@ -254,9 +263,7 @@ export function FloatingActionButton() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Ngày</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
+                      <Input type="date" {...field} />
                       <FormMessage />
                     </FormItem>
                   )}
@@ -269,18 +276,16 @@ export function FloatingActionButton() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{selectedType === "TRANSFER" ? "Từ Ví" : "Ví thanh toán"}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn ví" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {wallets.map(w => (
-                          <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <select 
+                      value={field.value}
+                      className="flex h-10 w-full rounded-xl border border-input bg-muted/40 px-3 py-2 text-sm shadow-sm transition-all focus:bg-background focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer"
+                      onChange={(e) => field.onChange(e.target.value)}
+                    >
+                      <option value="">-- Chọn ví --</option>
+                      {wallets.map(w => (
+                        <option key={w.id} value={w.id}>{w.name}</option>
+                      ))}
+                    </select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -293,18 +298,16 @@ export function FloatingActionButton() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Đến Ví</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Chọn ví nhận" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {wallets.filter(w => w.id !== selectedWalletId).map(w => (
-                            <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <select 
+                        value={field.value}
+                        className="flex h-10 w-full rounded-xl border border-input bg-muted/40 px-3 py-2 text-sm shadow-sm transition-all focus:bg-background focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer"
+                        onChange={(e) => field.onChange(e.target.value)}
+                      >
+                        <option value="">-- Chọn ví nhận --</option>
+                        {wallets.filter(w => w.id !== selectedWalletId).map(w => (
+                          <option key={w.id} value={w.id}>{w.name}</option>
+                        ))}
+                      </select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -316,21 +319,16 @@ export function FloatingActionButton() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Danh mục</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Chọn danh mục" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {filteredCategories.map(c => (
-                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                          ))}
-                          {filteredCategories.length === 0 && (
-                            <SelectItem value="empty" disabled>Chưa có danh mục nào</SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
+                      <select 
+                        value={field.value}
+                        className="flex h-10 w-full rounded-xl border border-input bg-muted/40 px-3 py-2 text-sm shadow-sm transition-all focus:bg-background focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer"
+                        onChange={(e) => field.onChange(e.target.value)}
+                      >
+                        <option value="">-- Chọn danh mục --</option>
+                        {filteredCategories.map(c => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
                       <FormMessage />
                     </FormItem>
                   )}

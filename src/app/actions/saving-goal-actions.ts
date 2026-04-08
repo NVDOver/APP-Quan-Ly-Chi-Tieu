@@ -11,6 +11,7 @@ const savingGoalSchema = z.object({
   targetAmount: z.coerce.number().positive("Số tiền mục tiêu phải lớn hơn 0"),
   deadlineDate: z.string().or(z.date()),
   currentAmount: z.coerce.number().optional(),
+  isRoundUp: z.boolean().optional(),
 });
 
 export async function createSavingGoal(data: z.infer<typeof savingGoalSchema>): Promise<ActionResult> {
@@ -26,6 +27,7 @@ export async function createSavingGoal(data: z.infer<typeof savingGoalSchema>): 
         ...validatedData,
         deadlineDate: new Date(validatedData.deadlineDate),
         userId,
+        isRoundUp: !!validatedData.isRoundUp,
       },
     });
 
@@ -50,6 +52,7 @@ export async function updateSavingGoal(id: string, data: z.infer<typeof savingGo
       data: {
         ...validatedData,
         deadlineDate: new Date(validatedData.deadlineDate),
+        isRoundUp: !!validatedData.isRoundUp,
       },
     });
 
@@ -145,8 +148,15 @@ export async function getSavingGoals() {
   if (!session?.user?.id) return [];
   const userId = session.user.id;
 
-  return prisma.savingGoal.findMany({
+  const goals = await prisma.savingGoal.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
   });
+
+  // Serialize Decimal → number để tránh lỗi khi truyền sang Client Components
+  return goals.map((g) => ({
+    ...g,
+    targetAmount: Number(g.targetAmount),
+    currentAmount: Number(g.currentAmount),
+  }));
 }

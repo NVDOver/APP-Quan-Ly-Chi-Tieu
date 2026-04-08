@@ -1,18 +1,14 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface WalletOption {
   id: string;
   name: string;
 }
+
+const selectClass =
+  "flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
 
 export function TransactionFilters({ 
   wallets, 
@@ -29,7 +25,7 @@ export function TransactionFilters({
   const updateFilters = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set(key, value);
-    params.set("page", "1"); // Reset to page 1 on filter change
+    params.set("page", "1");
     router.push(`/transactions?${params.toString()}`);
   };
 
@@ -37,34 +33,32 @@ export function TransactionFilters({
     <div className="flex flex-wrap gap-4">
       <div className="min-w-[150px] space-y-1.5">
         <label className="text-xs font-medium text-muted-foreground uppercase">Loại giao dịch</label>
-        <Select defaultValue={currentType || "ALL"} onValueChange={(v) => updateFilters("type", v || "ALL")}>
-          <SelectTrigger>
-            <SelectValue placeholder="Tất cả" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">Tất cả loại</SelectItem>
-            <SelectItem value="INCOME">Thu nhập</SelectItem>
-            <SelectItem value="EXPENSE">Chi tiêu</SelectItem>
-            <SelectItem value="TRANSFER">Chuyển khoản</SelectItem>
-          </SelectContent>
-        </Select>
+        <select
+          className={selectClass}
+          value={currentType || "ALL"}
+          onChange={(e) => updateFilters("type", e.target.value)}
+        >
+          <option value="ALL">Tất cả loại</option>
+          <option value="INCOME">Thu nhập</option>
+          <option value="EXPENSE">Chi tiêu</option>
+          <option value="TRANSFER">Chuyển khoản</option>
+        </select>
       </div>
 
       <div className="min-w-[200px] space-y-1.5">
         <label className="text-xs font-medium text-muted-foreground uppercase">Ví tài khoản</label>
-        <Select defaultValue={currentWalletId || "ALL"} onValueChange={(v) => updateFilters("walletId", v || "ALL")}>
-          <SelectTrigger>
-            <SelectValue placeholder="Tất cả ví" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">Tất cả ví</SelectItem>
-            {wallets.map((w) => (
-              <SelectItem key={w.id} value={w.id}>
-                {w.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <select
+          className={selectClass}
+          value={currentWalletId || "ALL"}
+          onChange={(e) => updateFilters("walletId", e.target.value)}
+        >
+          <option value="ALL">Tất cả ví</option>
+          {wallets.map((w) => (
+            <option key={w.id} value={w.id}>
+              {w.name}
+            </option>
+          ))}
+        </select>
       </div>
     </div>
   );

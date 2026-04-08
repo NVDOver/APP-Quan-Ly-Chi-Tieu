@@ -86,11 +86,11 @@ model Transaction {
   savingGoalId           String?               @map("saving_goal_id")
   recurringTransactionId String?               @map("recurring_transaction_id")
   debtLoanId             String?               @map("debt_loan_id")
-  category               Category?             @relation(fields: [categoryId], references: [id])
+  category               Category?             @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   recurringTransaction   RecurringTransaction? @relation(fields: [recurringTransactionId], references: [id])
-  savingGoal             SavingGoal?           @relation(fields: [savingGoalId], references: [id])
-  toWallet               Wallet?               @relation("ToWallet", fields: [toWalletId], references: [id])
-  debtLoan               DebtLoan?             @relation(fields: [debtLoanId], references: [id])
+  savingGoal             SavingGoal?           @relation(fields: [savingGoalId], references: [id], onDelete: SetNull)
+  toWallet               Wallet?               @relation("ToWallet", fields: [toWalletId], references: [id], onDelete: SetNull)
+  debtLoan               DebtLoan?             @relation(fields: [debtLoanId], references: [id], onDelete: SetNull)
   user                   User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   wallet                 Wallet                @relation("FromWallet", fields: [walletId], references: [id], onDelete: Cascade)
   tags                   TagOnTransaction[]
@@ -135,6 +135,7 @@ model SavingGoal {
   id            String        @id @default(cuid())
   userId        String        @map("user_id")
   name          String
+  isRoundUp     Boolean       @default(false) @map("is_round_up")
   targetAmount  Decimal       @map("target_amount") @db.Decimal(19, 4)
   currentAmount Decimal       @default(0) @map("current_amount") @db.Decimal(19, 4)
   deadlineDate  DateTime      @map("deadline_date") @db.Date
@@ -155,7 +156,7 @@ model Budget {
   monthYear   DateTime  @map("month_year") @db.Date
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  category    Category? @relation(fields: [categoryId], references: [id])
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, categoryId, monthYear])

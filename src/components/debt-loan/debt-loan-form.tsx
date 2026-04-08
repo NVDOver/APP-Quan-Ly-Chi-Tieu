@@ -117,17 +117,14 @@ export function DebtLoanForm({ wallets }: DebtLoanFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Loại</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn loại" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="DEBT">Tôi đi vay (Nợ)</SelectItem>
-                        <SelectItem value="LOAN">Tôi cho mượn</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <select 
+                      value={field.value}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      onChange={(e) => field.onChange(e.target.value)}
+                    >
+                      <option value="DEBT">Tôi đi vay (Nợ)</option>
+                      <option value="LOAN">Tôi cho mượn</option>
+                    </select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -138,20 +135,18 @@ export function DebtLoanForm({ wallets }: DebtLoanFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Ví nhận/chi</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn ví" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {wallets.map((wallet) => (
-                          <SelectItem key={wallet.id} value={wallet.id}>
-                            {wallet.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <select 
+                      value={field.value}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      onChange={(e) => field.onChange(e.target.value)}
+                    >
+                      <option value="">-- Chọn ví --</option>
+                      {wallets.map((wallet) => (
+                        <option key={wallet.id} value={wallet.id}>
+                          {wallet.name}
+                        </option>
+                      ))}
+                    </select>
                     <FormMessage />
                   </FormItem>
                 )}
