@@ -1,20 +1,24 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Target, Info } from "lucide-react";
+import { TrendingUp, ArrowUpRight, ArrowDownRight, Target, Info } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
 interface AdvancedAnalysisProps {
-  stats: any;
+  stats: {
+    currentExpTotal: number;
+    lastExpTotal: number;
+    expDiffPercent: number;
+  };
 }
 
 export function AdvancedAnalysis({ stats }: AdvancedAnalysisProps) {
-  const { currentExpTotal, prevExpTotal, expDiffPercent } = stats;
+  const { currentExpTotal, lastExpTotal, expDiffPercent } = stats;
   const isUp = expDiffPercent >= 0;
 
   // Giẻ định: Dự báo (Forecasting) bằng trung bình 3 tháng gần nhất
   // Ở đây chúng ta chỉ có current và prev, nên lấy trung bình 2 tháng
-  const forecast = Math.round((currentExpTotal + prevExpTotal) / 2);
+  const forecast = Math.round((currentExpTotal + lastExpTotal) / 2);
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
@@ -42,12 +46,12 @@ export function AdvancedAnalysis({ stats }: AdvancedAnalysisProps) {
            <div className="space-y-3">
               <div className="flex justify-between text-xs font-bold uppercase tracking-tighter">
                 <span className="text-muted-foreground">Tháng {new Date().getMonth() || 12}</span>
-                <span>{formatCurrency(prevExpTotal)}</span>
+                <span>{formatCurrency(lastExpTotal)}</span>
               </div>
               <div className="h-2 w-full bg-muted rounded-full overflow-hidden shadow-inner flex">
                  <div 
                    className="h-full bg-muted-foreground/30 transition-all duration-1000" 
-                   style={{ width: `${prevExpTotal > currentExpTotal ? 100 : (prevExpTotal/currentExpTotal)*100}%` }}
+                   style={{ width: `${lastExpTotal > currentExpTotal ? 100 : (lastExpTotal/currentExpTotal)*100}%` }}
                  />
               </div>
               
@@ -58,7 +62,7 @@ export function AdvancedAnalysis({ stats }: AdvancedAnalysisProps) {
               <div className="h-3 w-full bg-muted rounded-full overflow-hidden shadow-inner flex">
                  <div 
                    className={`h-full opacity-80 rounded-full transition-all duration-1000 ${isUp ? 'bg-rose-500' : 'bg-emerald-500'}`} 
-                   style={{ width: `${currentExpTotal > prevExpTotal ? 100 : (currentExpTotal/prevExpTotal)*100}%` }}
+                   style={{ width: `${currentExpTotal > lastExpTotal ? 100 : (currentExpTotal/lastExpTotal)*100}%` }}
                  />
               </div>
            </div>
