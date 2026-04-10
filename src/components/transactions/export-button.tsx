@@ -14,7 +14,7 @@ import * as XLSX from "xlsx";
 
 interface TransactionExportItem {
   date: string | Date;
-  note?: string;
+  note?: string | null;
   amount: number;
   type: string;
   category?: { name: string } | null;

@@ -60,7 +60,7 @@ export function TrendsChart({ data }: TrendsChartProps) {
               boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
               backdropFilter: 'blur(8px)'
             }}
-            formatter={(value: string | number | undefined | readonly (string | number)[]) => [formatCurrency(Number(value || 0)), ""]}
+            formatter={(value: number | string | undefined | readonly (string | number)[]) => [formatCurrency(Number(value || 0)), ""]}
           />
           <Legend verticalAlign="top" height={36} />
           <Area

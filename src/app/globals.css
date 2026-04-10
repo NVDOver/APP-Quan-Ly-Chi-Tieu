@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: 'Outfit', var(--font-sans);
+  --font-sans: var(--app-font-sans);
+  --font-mono: var(--app-font-mono);
+  --font-heading: var(--app-font-heading);
   
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
@@ -39,6 +39,9 @@
 }
 
 :root {
+  --app-font-sans: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --app-font-mono: Consolas, "Courier New", monospace;
+  --app-font-heading: "Avenir Next", "Segoe UI", "Trebuchet MS", sans-serif;
   --background: oklch(0.98 0.01 200);
   --foreground: oklch(0.25 0.02 200);
   

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { syncNotificationsForAllUsers } from "@/lib/notification-service";
 
 function calculateNextDate(currentDate: Date, interval: "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY"): Date {
     const next = new Date(currentDate);
@@ -115,10 +116,14 @@ export async function GET(request: Request) {
             }
         }
 
+        const notificationSync = await syncNotificationsForAllUsers();
+
         return NextResponse.json({
             success: true,
             processedCount,
             errorsCount,
+            notificationUsers: notificationSync.processedUsers,
+            notificationsCreated: notificationSync.createdCount,
             timestamp: now.toISOString()
         });
     } catch (error) {

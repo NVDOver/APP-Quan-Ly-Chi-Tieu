@@ -165,7 +165,7 @@ export async function getRecurringTransactions() {
     walletId: tx.walletId,
     toWalletId: tx.toWalletId,
     categoryId: tx.categoryId,
-    amount: (tx.amount as any).toNumber(),
+    amount: Number(tx.amount),
     type: tx.type,
     note: tx.note,
     interval: tx.interval,
@@ -176,13 +176,13 @@ export async function getRecurringTransactions() {
     lastProcessedDate: tx.lastProcessedDate,
     createdAt: tx.createdAt,
     updatedAt: tx.updatedAt,
-    wallet: tx.wallet ? {
+      wallet: tx.wallet ? {
       ...tx.wallet,
-      balance: (tx.wallet.balance as any).toNumber()
+      balance: Number(tx.wallet.balance)
     } : null,
     toWallet: tx.toWallet ? {
       ...tx.toWallet,
-      balance: (tx.toWallet.balance as any).toNumber()
+      balance: Number(tx.toWallet.balance)
     } : null,
     category: tx.category,
   }));

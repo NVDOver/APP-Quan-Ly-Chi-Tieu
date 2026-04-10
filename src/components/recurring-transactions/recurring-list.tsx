@@ -15,9 +15,17 @@ import { toast } from "sonner";
 import { PauseCircle, PlayCircle, Trash2, Repeat, Loader2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
-type RecurringWithRelations = RecurringTransaction & {
-  wallet: Wallet;
-  toWallet: Wallet | null;
+type SerializedRecurringTransaction = Omit<RecurringTransaction, "amount"> & {
+  amount: number;
+};
+
+type SerializedWallet = Omit<Wallet, "balance"> & {
+  balance: number;
+};
+
+type RecurringWithRelations = SerializedRecurringTransaction & {
+  wallet: SerializedWallet | null;
+  toWallet: SerializedWallet | null;
   category: Category | null;
 };
 
@@ -72,7 +80,7 @@ export function RecurringList({ data }: { data: RecurringWithRelations[] }) {
                 {item.status === 'COMPLETED' && <Badge variant="outline" className="bg-green-100 text-green-800">Hoàn thành</Badge>}
               </div>
               <p className="text-sm text-muted-foreground">
-                Ví: {item.wallet.name} {item.toWallet ? `→ ${item.toWallet.name}` : ''}
+                Ví: {item.wallet?.name || "Ví không xác định"} {item.toWallet ? `→ ${item.toWallet.name}` : ""}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 Tiếp theo: {format(new Date(item.nextProcessingDate), "dd/MM/yyyy")}

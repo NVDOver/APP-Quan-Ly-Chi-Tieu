@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { getDebtsLoans } from '@/app/actions/debt-loan-actions';
 import { getWallets } from '@/app/actions/wallet-actions';
-import { DebtLoanList } from '@/components/debt-loan/debt-loan-list';
+import { DebtLoanList, DebtLoanWithRelations } from '@/components/debt-loan/debt-loan-list';
 import { DebtLoanForm } from '@/components/debt-loan/debt-loan-form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -32,16 +32,12 @@ export default async function DebtLoanPage() {
   const wallets = walletsRes.wallets || [];
 
   const totalDebt = items
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .filter((i: any) => i.type === 'DEBT' && i.status === 'OPEN')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .reduce((acc: number, i: any) => acc + Number(i.remainingAmount), 0);
+    .filter((i: DebtLoanWithRelations) => i.type === 'DEBT' && i.status === 'OPEN')
+    .reduce((acc: number, i: DebtLoanWithRelations) => acc + Number(i.remainingAmount), 0);
 
   const totalLoan = items
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .filter((i: any) => i.type === 'LOAN' && i.status === 'OPEN')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .reduce((acc: number, i: any) => acc + Number(i.remainingAmount), 0);
+    .filter((i: DebtLoanWithRelations) => i.type === 'LOAN' && i.status === 'OPEN')
+    .reduce((acc: number, i: DebtLoanWithRelations) => acc + Number(i.remainingAmount), 0);
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-8">
@@ -89,14 +85,8 @@ export default async function DebtLoanPage() {
             <TabsTrigger value="all">Tất cả</TabsTrigger>
           </TabsList>
         </div>
-        <TabsContent value="active" className="space-y-4">
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          <DebtLoanList items={items.filter((i: any) => i.status === 'OPEN')} />
-        </TabsContent>
-        <TabsContent value="paid" className="space-y-4">
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          <DebtLoanList items={items.filter((i: any) => i.status === 'PAID')} />
-        </TabsContent>
+          <DebtLoanList items={items.filter((i: DebtLoanWithRelations) => i.status === 'OPEN')} />
+          <DebtLoanList items={items.filter((i: DebtLoanWithRelations) => i.status === 'PAID')} />
         <TabsContent value="all" className="space-y-4">
           <DebtLoanList items={items} />
         </TabsContent>

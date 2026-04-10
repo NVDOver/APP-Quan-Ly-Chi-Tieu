@@ -10,10 +10,8 @@ const registerSchema = z.object({
 });
 
 export async function POST(req: Request) {
-  console.log("POST /api/auth/register - Request received");
   try {
     const body = await req.json();
-    console.log("Request body:", { ...body, password: "[REDACTED]" });
     const { fullName, email, password } = registerSchema.parse(body);
 
     const existingUser = await prisma.user.findUnique({
@@ -46,6 +44,12 @@ export async function POST(req: Request) {
           userId: user.id,
           name: "Tiền mặt",
           balance: 0,
+        },
+      });
+
+      await tx.notificationPreference.create({
+        data: {
+          userId: user.id,
         },
       });
 

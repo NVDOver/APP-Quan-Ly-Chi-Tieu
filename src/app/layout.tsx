@@ -1,18 +1,7 @@
 import type { Metadata } from "next";
-import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
 import { Providers } from "@/components/providers";
-
-const inter = Inter({
-  variable: "--font-sans",
-  subsets: ["latin", "latin-ext"],
-});
-
-const outfit = Outfit({
-  variable: "--font-heading",
-  subsets: ["latin", "latin-ext"],
-});
 
 export const metadata: Metadata = {
   title: "SpendWise - Quản lý Chi tiêu Thông minh",
@@ -48,9 +37,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${inter.variable} ${outfit.variable} min-h-screen bg-background font-sans antialiased flex flex-col`}
-      >
+      <body className="min-h-screen bg-background font-sans antialiased flex flex-col" suppressHydrationWarning>
         <Providers>
           {children}
           <Toaster richColors position="top-right" />

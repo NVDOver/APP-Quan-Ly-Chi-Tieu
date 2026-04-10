@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function OfflinePage() {
   return (
     <main className="grid min-h-screen place-items-center bg-slate-950 text-white px-6 py-16 text-center">
@@ -7,12 +9,12 @@ export default function OfflinePage() {
           Ứng dụng đang ở chế độ offline. Vui lòng kiểm tra kết nối hoặc thử lại sau.
         </p>
         <div className="mt-8 flex justify-center gap-4">
-          <a
+          <Link
             href="/"
             className="rounded-full bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400"
           >
             Về trang chủ
-          </a>
+          </Link>
         </div>
       </div>
     </main>

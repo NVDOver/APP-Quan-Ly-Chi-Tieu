@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef } from "react";
-// @ts-expect-error - tesseract.js types not available
 import { createWorker } from "tesseract.js";
 import { Camera, Upload, Loader2, SmartphoneIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
