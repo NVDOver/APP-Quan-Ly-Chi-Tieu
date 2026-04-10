@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import type { Prisma, TransactionType } from "@prisma/client";
+import { formatCurrency } from "@/lib/utils";
 
 const createTransactionSchema = z.object({
   type: z.enum(["INCOME", "EXPENSE", "TRANSFER"]),
@@ -57,8 +58,7 @@ export async function createTransaction(data: z.infer<typeof createTransactionSc
       }
 
       // 2. Tạo bản ghi giao dịch chính
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const transaction = await (tx.transaction as any).create({
+      const transaction = await tx.transaction.create({
         data: {
           userId,
           walletId: parsedData.walletId,
@@ -78,8 +78,7 @@ export async function createTransaction(data: z.infer<typeof createTransactionSc
       if (parsedData.tagIds && parsedData.tagIds.length > 0) {
         await Promise.all(
           parsedData.tagIds.map((tagId) =>
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (tx as any).tagOnTransaction.create({
+            tx.tagOnTransaction.create({
               data: { tagId, transactionId: transaction.id },
             })
           )
@@ -90,11 +89,9 @@ export async function createTransaction(data: z.infer<typeof createTransactionSc
       // Nếu là chi tiêu (EXPENSE), tự động làm tròn đến 10.000đ gần nhất và bỏ vào Piggy Bank
       if (parsedData.type === "EXPENSE") {
         const roundUpAmount = (Math.ceil(parsedData.amount / 10000) * 10000) - parsedData.amount;
-        
         if (roundUpAmount > 0) {
           // Tìm mục tiêu tiết kiệm đang bật Round-up (lấy cái gần nhất)
           const roundUpGoal = await tx.savingGoal.findFirst({
-            // @ts-expect-error - isRoundUp is newly added feature not yet in Prisma schema types
             where: { userId, isRoundUp: true },
             orderBy: { createdAt: "desc" }
           });
@@ -127,44 +124,8 @@ export async function createTransaction(data: z.infer<typeof createTransactionSc
           }
         }
       }
-      // FEATURE: 2. Hệ thống Nhắc nhở (Budget Alerts)
-      if (parsedData.type === "EXPENSE" && parsedData.categoryId) {
-        const today = new Date();
-        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-
-        const budget = await tx.budget.findFirst({
-          where: { userId, categoryId: parsedData.categoryId, monthYear: startOfMonth }
-        });
-
-        if (budget) {
-          // Tính tổng chi tiêu hiện tại của category trong tháng
-          const catExpenses = await tx.transaction.aggregate({
-            where: { 
-              userId, 
-              categoryId: parsedData.categoryId, 
-              type: "EXPENSE",
-              date: { gte: startOfMonth }
-            },
-            _sum: { amount: true }
-          });
-
-          const totalUsed = Number(catExpenses._sum.amount || 0);
-          const limit = Number(budget.limitAmount);
-          const newUsagePercent = (totalUsed / limit) * 100;
-
-          if (newUsagePercent >= 100) {
-            // Đã vượt ngưỡng 100%
-          } else if (newUsagePercent >= 80) {
-            // Sắp chạm ngưỡng 80%
-          }
-        }
-      }
     });
 
-    // Helper nội bộ để format tiền trong note
-    function formatCurrency(val: number) {
-      return new Intl.NumberFormat("vi-VN").format(val) + "đ";
-    }
 
     revalidatePath("/");
     revalidatePath("/transactions");
@@ -268,8 +229,7 @@ export async function getTransactions(params: {
   }
 
   const [rawTransactions, total] = await Promise.all([
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (prisma.transaction as any).findMany({
+    prisma.transaction.findMany({
       where,
       skip,
       take: pageSize,
@@ -285,8 +245,7 @@ export async function getTransactions(params: {
   ]);
 
   // Serialize Decimal → number để tránh lỗi khi truyền sang Client Components
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const transactions = (rawTransactions as any).map((t: any) => ({
+  const transactions = rawTransactions.map((t) => ({
     ...t,
     amount: Number(t.amount),
     wallet: t.wallet ? { ...t.wallet, balance: Number(t.wallet.balance) } : t.wallet,
@@ -307,13 +266,11 @@ export async function getFormOptions() {
   const [rawWallets, categories, tags] = await Promise.all([
     prisma.wallet.findMany({ where: { userId: session.user.id } }),
     prisma.category.findMany({ where: { userId: session.user.id, isDeleted: false } }),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (prisma as any).tag.findMany({ where: { userId: session.user.id } })
+    prisma.tag.findMany({ where: { userId: session.user.id } })
   ]);
 
   // Serialize Decimal → number để tránh lỗi khi truyền sang Client Components
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const wallets = (rawWallets as any).map((w: any) => ({ ...w, balance: Number(w.balance) }));
+  const wallets = rawWallets.map((w) => ({ ...w, balance: Number(w.balance) }));
 
   return { wallets, categories, tags };
 }
@@ -324,8 +281,7 @@ export async function getTransactionLocations() {
   const userId = session.user.id;
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const transactions = await (prisma.transaction as any).findMany({
+    const transactions = await prisma.transaction.findMany({
       where: {
         userId,
         latitude: { not: null },

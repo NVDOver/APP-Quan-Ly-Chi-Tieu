@@ -22,8 +22,10 @@ model User {
   savingGoals           SavingGoal[]
   transactions          Transaction[]
   wallets               Wallet[]
-  debtsLoans           DebtLoan[]
-  tags                 Tag[]
+  debtsLoans            DebtLoan[]
+  tags                  Tag[]
+  notifications         Notification[]
+  notificationPreference NotificationPreference?
 
   @@index([email])
   @@map("users")
@@ -220,6 +222,40 @@ model DebtLoan {
   @@map("debts_loans")
 }
 
+model Notification {
+  id           String              @id @default(cuid())
+  userId       String              @map("user_id")
+  type         NotificationType
+  channel      NotificationChannel @default(IN_APP)
+  title        String
+  message      String
+  link         String?
+  dedupeKey    String              @unique @map("dedupe_key")
+  isRead       Boolean             @default(false) @map("is_read")
+  readAt       DateTime?           @map("read_at") @db.Timestamptz(6)
+  createdAt    DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  id                     String   @id @default(cuid())
+  userId                 String   @unique @map("user_id")
+  dailyInputEnabled      Boolean  @default(true) @map("daily_input_enabled")
+  budgetAlertEnabled     Boolean  @default(true) @map("budget_alert_enabled")
+  recurringReminderEnabled Boolean @default(true) @map("recurring_reminder_enabled")
+  dailyReminderHour      Int      @default(20) @map("daily_reminder_hour")
+  recurringReminderDays  Int      @default(2) @map("recurring_reminder_days")
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
+}
+
 enum DebtLoanType {
   DEBT
   LOAN
@@ -252,4 +288,17 @@ enum RecurringStatus {
   ACTIVE
   PAUSED
   COMPLETED
+}
+
+enum NotificationType {
+  DAILY_INPUT_REMINDER
+  BUDGET_WARNING
+  BUDGET_EXCEEDED
+  RECURRING_DUE
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  PUSH
 }

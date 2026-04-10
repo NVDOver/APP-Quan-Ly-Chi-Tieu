@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { ModeToggle } from "./mode-toggle";
 import { UserNav } from "./user-nav";
+import { NotificationBell } from "./notification-bell";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -51,6 +52,7 @@ export function Navbar() {
           
           <div className="flex flex-1 items-center justify-end space-x-2 md:space-x-4">
             <nav className="flex items-center space-x-1 md:space-x-2">
+              <NotificationBell />
               <ModeToggle />
               <UserNav />
             </nav>

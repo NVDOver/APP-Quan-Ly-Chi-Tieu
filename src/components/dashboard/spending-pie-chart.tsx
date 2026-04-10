@@ -47,8 +47,7 @@ export function SpendingPieChart({ data }: SpendingPieChartProps) {
                   ))}
                 </Pie>
                 <Tooltip
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  formatter={(value: any) => [formatCurrency(Number(value || 0)), "Chi tiêu"]}
+                  formatter={(value: string | number | undefined | readonly (string | number)[]) => [formatCurrency(Number(value || 0)), "Chi tiêu"]}
                   contentStyle={{ 
                     borderRadius: '16px', 
                     border: 'none', 
