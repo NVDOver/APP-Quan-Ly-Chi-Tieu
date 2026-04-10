@@ -1,12 +1,8 @@
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Wallet, CreditCard, ArrowRight, PlusCircle, TrendingUp, TrendingDown, Target } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { getDashboardStats } from "@/app/actions/dashboard-actions";
-import { SpendingPieChart } from "@/components/dashboard/spending-pie-chart";
-import { IncomeVsExpenseChart } from "@/components/dashboard/income-expense-chart";
 import { BudgetAlerts } from "@/components/dashboard/budget-alerts";
 import { FadeIn } from "@/components/fade-in";
 import { AIAdvisor } from "@/components/dashboard/ai-advisor";
@@ -28,22 +24,7 @@ export default async function DashboardPage() {
     getTransactionLocations(),
   ]);
 
-  // Serialize Decimal → number để tránh lỗi khi truyền sang Client Components
-  const wallets = rawWallets.map((w) => ({ ...w, balance: Number(w.balance) }));
-  const serializedSavingGoals = savingGoals.map((g) => ({
-    ...g,
-    targetAmount: Number(g.targetAmount),
-    currentAmount: Number(g.currentAmount),
-  }));
-
-
-  // Tính tổng số dư của tất cả các ví
-  const totalBalance = wallets.reduce((acc, wallet) => acc + Number(wallet.balance), 0);
-
-  const walletCount = wallets.length;
-  const categoryCount = categories.length;
-
-  const hasData = walletCount > 0 || categoryCount > 0;
+  const hasWallets = walletCount > 0;
 
   // Render Greeting
   const getGreeting = () => {
@@ -318,3 +299,4 @@ export default async function DashboardPage() {
     </div>
   );
 }
+

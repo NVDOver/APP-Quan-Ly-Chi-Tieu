@@ -1,40 +1,81 @@
-# Hướng dẫn Triển khai (Deployment Guide)
+# 🚀 Hướng dẫn Triển khai Toàn cầu (Deployment Guide)
 
-Tài liệu này cung cấp các bước chi tiết để triển khai ứng dụng Quản lý Chi tiêu lên môi trường Production (Vercel) và kết nối với cơ sở dữ liệu PostgreSQL từ xa.
+Tài liệu này hướng dẫn bạn đưa ứng dụng **Quản lý Chi tiêu** từ máy tính cá nhân lên internet để bất kỳ ai cũng có thể truy cập mọi lúc, mọi nơi.
 
-## 1. Chuẩn bị Cơ sở dữ liệu (PostgreSQL)
+---
 
-Bạn có thể sử dụng các dịch vụ DB-as-a-Service phổ biến để kết nối từ xa:
+## 📋 Điều kiện cần (Prerequisites)
 
-- **Neon (Khuyên dùng)**: [neon.tech](https://neon.tech/) - DB Serverless cực nhanh.
-- **Supabase**: [supabase.com](https://supabase.com/) - Mạnh mẽ và miễn phí khởi điểm tốt.
+Trước khi bắt đầu, hãy đảm bảo bạn đã đăng ký tài khoản tại các dịch vụ miễn phí sau:
+1.  **[GitHub](https://github.com/)**: Lưu trữ mã nguồn (Source Code).
+2.  **[Neon.tech](https://neon.tech/)**: Lưu trữ Cơ sở dữ liệu (PostgreSQL) đám mây.
+3.  **[Vercel](https://vercel.com/)**: Máy chủ lưu trữ ứng dụng Web.
 
-### Các bước lấy Connection String:
-1. Tạo một dự án mới trên Neon hoặc Supabase.
-2. Sao chép chuỗi kết nối (Connection String). Định dạng tiêu chuẩn:
-   `postgresql://USER:PASSWORD@HOST:5432/DATABASE_NAME?sslmode=require`
-3. Nếu sử dụng Prisma trên Vercel, hãy đảm bảo chọn đúng chế độ kết nối (Direct connection vs Connection pooling).
+---
 
-## 2. Cấu hình Biến môi trường (Vercel)
+## 🛠 Giai đoạn 1: Đưa mã nguồn lên GitHub
 
-Khi tạo dự án mới trên Vercel, hãy thêm các biến sau vào mục **Settings > Environment Variables**:
+Để Vercel có thể lấy mã nguồn của bạn, bạn cần đẩy dự án lên GitHub.
 
-| Biến | Giá trị / Gợi ý | Mục đích |
+1.  Tạo một **New Repository** trên GitHub (đặt tên ví dụ: `app-quan-ly-chi-tieu`).
+2.  Mở terminal tại thư mục gốc của dự án và chạy các lệnh:
+    ```bash
+    git init
+    git add .
+    git commit -m "Initial commit"
+    git branch -M main
+    git remote add origin https://github.com/TEN_CUA_BAN/TEN_REPO.git
+    git push -u origin main
+    ```
+
+---
+
+## 💾 Giai đoạn 2: Thiết lập Cơ sở dữ liệu (Neon)
+
+Vì cơ sở dữ liệu trên máy bạn (`localhost`) không thể truy cập từ internet, chúng ta cần một database "nằm trên mây".
+
+1.  Đăng nhập vào [Neon.tech](https://neon.tech/).
+2.  Tạo project mới (đặt tên tùy ý).
+3.  Ở mục **Dashboard**, bạn sẽ thấy chuỗi **Connection String**. Hãy sao chép nó. Nó có dạng:
+    `postgresql://neondb_owner:PASSWORD@ep-xxx-xxx.aws.neon.tech/neondb?sslmode=require`
+4.  **Lưu lại chuỗi này**, chúng ta sẽ dùng nó trong bước tiếp theo.
+
+---
+
+## 🚀 Giai đoạn 3: Triển khai lên Vercel
+
+1.  Đăng nhập vào [Vercel](https://vercel.com/).
+2.  Chọn **Add New > Project**.
+3.  Tìm và **Import** repository bạn vừa đẩy lên GitHub.
+4.  Tại phần **Environment Variables**, hãy thêm các biến sau:
+
+| Biến (Key) | Giá trị (Value) | Gợi ý |
 | :--- | :--- | :--- |
-| `DATABASE_URL` | `postgresql://...` | Prisma kết nối DB |
-| `AUTH_SECRET` | `openssl rand -base64 32` | Bảo mật Session người dùng (v5) |
-| `AUTH_URL` | `https://your-domain.vercel.app` | URL chính của ứng dụng |
-| `AUTH_TRUST_HOST` | `true` | Cần thiết cho NextAuth v5 trên Vercel |
-| `GEMINI_API_KEY` | `Lấy từ Google AI Studio` | Kích hoạt tính năng Cố vấn AI |
+| `DATABASE_URL` | Chuỗi đã lấy từ Neon | Dùng để kết nối DB |
+| `AUTH_SECRET` | Một chuỗi ngẫu nhiên | Có thể tạo bằng: `openssl rand -base64 32` |
+| `AUTH_TRUST_HOST` | `true` | Cần cho NextAuth hoạt động trên Vercel |
+| `GEMINI_API_KEY` | Key của bạn | Lấy từ [Google AI Studio](https://aistudio.google.com/) |
 
-## 3. Triển khai lên Vercel
+5.  Nhấn **Deploy**. Vercel sẽ mất khoảng 1-2 phút để "nấu" ứng dụng của bạn.
 
-1. Kết nối kho lưu trữ GitHub của bạn với Vercel.
-2. **Build Settings**: Vercel sẽ tự động nhận diện Next.js.
-3. **Install Command**: `npm install`.
-4. **Build Command**: `npx prisma generate && next build`.
-5. **Deploy**: Nhấn Deploy và chờ ứng dụng trực tuyến.
+---
 
-## 4. Lưu ý quan trọng
-- Sau khi đổi DB ở môi trường Production, hãy chạy `npx prisma db push` hoặc `npx prisma migrate deploy` để đồng bộ cấu trúc bảng.
-- Đảm bảo `GEMINI_API_KEY` được bảo mật, không bao giờ đẩy vào Git.
+## 🔄 Giai đoạn 4: Đồng bộ hóa Database
+
+Sau khi Vercel báo "Deployment Successful", bạn cần đẩy cấu trúc bảng từ mã nguồn lên database mới trên Neon.
+
+Mở terminal tại dự án local của bạn và chạy:
+```bash
+# Đổi DATABASE_URL trong file .env của bạn thành chuỗi Neon trước khi chạy lệnh này
+npx prisma db push
+```
+
+---
+
+## 🌟 Chúc mừng!
+Ứng dụng của bạn hiện đã có thể truy cập qua URL dạng `ten-du-an.vercel.app`. Hãy gửi link này cho bạn bè để họ cùng trải nghiệm nhé!
+
+### ⚠️ Lưu ý bảo mật
+- KHÔNG bao giờ chia sẻ file `.env` hoặc các API Key lên GitHub.
+- Vercel sẽ tự động cập nhật web mỗi khi bạn `git push` mã mới lên nhánh `main`.
+
