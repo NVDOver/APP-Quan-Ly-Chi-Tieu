@@ -96,9 +96,7 @@ APP-Quan-Ly-Chi-Tieu/
 ├── src/
 │   ├── app/            # Next.js App Router (Pages & Actions)
 │   ├── components/     # UI Components (Custom & Shadcn)
-│   ├── hooks/          # Custom Hooks (use-toast, etc.)
 │   ├── lib/            # Shared Utilities (Prisma, Auth)
-│   ├── types/          # TypeScript Definitions
 │   └── proxy.ts        # Middleware & Auth logic
 ├── .gitignore          # Cấu hình bỏ qua các file không cần thiết
 ├── package.json        # Dependencies & Scripts
